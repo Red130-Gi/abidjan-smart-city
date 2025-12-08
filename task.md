@@ -1,0 +1,82 @@
+# Abidjan Smart City Platform - Project Tasks
+
+- [x] Project Initialization & Architecture Design
+    - [x] Create project directory structure
+    - [x] Define global architecture (Lambda, Microservices)
+    - [x] Create architecture diagrams/descriptions
+- [x] Infrastructure Setup
+    - [x] Create docker-compose.yml (Kafka, Zookeeper, Spark, Postgres, Mongo, Redis)
+    - [x] Configure networks and volumes
+- [x] Data Ingestion Layer
+    - [x] Implement IoT Data Producers (Python)
+    - [x] Configure Kafka Topics
+- [x] Stream Processing Layer
+    - [x] Implement Spark Streaming Jobs (PySpark)
+    - [x] Implement Data Cleaning & Enrichment
+- [x] Storage Layer
+    - [x] Initialize PostgreSQL/PostGIS schemas
+    - [x] Initialize MongoDB collections
+- [x] Machine Learning Layer
+    - [x] Feature Engineering Pipeline
+    - [x] Train XGBoost & LSTM Models
+    - [x] Implement Anomaly Detection
+- [x] API Layer
+    - [x] Setup FastAPI project
+    - [x] Implement Endpoints (Traffic, Predictions)
+    - [x] Implement Auth (JWT)
+- [x] Visualization & Monitoring
+    - [x] Configure Grafana Dashboards
+- [x] Final Review & Documentation
+    - [x] Unit tests
+    - [x] Load tests
+# Abidjan Smart City Platform - Project Tasks
+
+- [x] Project Initialization & Architecture Design
+    - [x] Create project directory structure
+    - [x] Define global architecture (Lambda, Microservices)
+    - [x] Create architecture diagrams/descriptions
+- [x] Infrastructure Setup
+    - [x] Create docker-compose.yml (Kafka, Zookeeper, Spark, Postgres, Mongo, Redis)
+    - [x] Configure networks and volumes
+- [x] Data Ingestion Layer
+    - [x] Implement IoT Data Producers (Python)
+    - [x] Configure Kafka Topics
+- [x] Stream Processing Layer
+    - [x] Implement Spark Streaming Jobs (PySpark)
+    - [x] Implement Data Cleaning & Enrichment
+- [x] Storage Layer
+    - [x] Initialize PostgreSQL/PostGIS schemas
+    - [x] Initialize MongoDB collections
+- [x] Machine Learning Layer
+    - [x] Feature Engineering Pipeline
+    - [x] Train XGBoost & LSTM Models
+    - [x] Implement Anomaly Detection
+- [x] API Layer
+    - [x] Setup FastAPI project
+    - [x] Implement Endpoints (Traffic, Predictions)
+    - [x] Implement Auth (JWT)
+- [x] Visualization & Monitoring
+    - [x] Configure Grafana Dashboards
+- [x] Final Review & Documentation
+    - [x] Unit tests
+    - [x] Load tests
+    - [x] API & Deployment documentation
+- [x] Future Route Planning Map
+    - [x] Create static/future_map.html
+    - [x] Add API endpoint for map serving
+    - [x] Verify map functionality
+    - [x] Verify map functionality
+- [x] Advanced ML Models (LSTM + Ensemble)
+    - [x] Add dependencies (tensorflow)
+    - [x] Implement LSTM model (`src/ml/lstm_model.py`)
+    - [x] Implement Ensemble model (`src/ml/ensemble_model.py`)
+    - [x] Update prediction simulator to use Ensemble
+    - [x] Update Grafana dashboard with Ensemble predictions
+    - [x] Migrate Ensemble panel to Predictions Dashboard
+    - [x] Update platform to use Ensemble model globally
+    - [x] Add 1h horizon prediction panel to dashboard
+    - [x] Add 1h horizon details table to dashboard
+
+## Documentation & Governance
+- [x] Create Data Governance & Extension Proposal
+- [x] Create Full Project Documentation (Process, Design, Realization)
