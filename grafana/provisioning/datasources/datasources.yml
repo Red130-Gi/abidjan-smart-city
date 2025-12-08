@@ -1,0 +1,25 @@
+apiVersion: 1
+
+datasources:
+  - name: PostgreSQL
+    type: postgres
+    uid: postgres-datasource
+    url: postgres:5432
+    database: smart_city
+    user: admin
+    secureJsonData:
+      password: password
+    jsonData:
+      sslmode: disable
+      maxOpenConns: 10
+      maxIdleConns: 10
+      connMaxLifetime: 14400
+    isDefault: true
+    editable: true
+
+#   - name: Redis
+#     type: redis-datasource
+#     url: redis:6379
+#     jsonData:
+#       client: standalone
+#     editable: true

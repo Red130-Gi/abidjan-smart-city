@@ -1,0 +1,607 @@
+{
+    "annotations": {
+        "list": []
+    },
+    "editable": true,
+    "fiscalYearStartMonth": 0,
+    "graphTooltip": 0,
+    "id": null,
+    "links": [],
+    "liveNow": true,
+    "panels": [
+        {
+            "type": "text",
+            "title": "",
+            "gridPos": {
+                "h": 2,
+                "w": 24,
+                "x": 0,
+                "y": 0
+            },
+            "id": 20,
+            "options": {
+                "mode": "markdown",
+                "content": "# 🚗 Trafic en Temps Réel - Abidjan Smart City\n**Données mises à jour toutes les 5 secondes** | [🌍 Ouvrir la Carte Interactive](http://localhost:8000/map)"
+            }
+        },
+        {
+            "id": 1,
+            "title": "🚗 Vitesse Moyenne Globale",
+            "type": "stat",
+            "gridPos": {
+                "h": 4,
+                "w": 6,
+                "x": 0,
+                "y": 2
+            },
+            "datasource": {
+                "type": "postgres",
+                "uid": "postgres-datasource"
+            },
+            "targets": [
+                {
+                    "rawSql": "SELECT AVG(avg_speed) as value FROM traffic_segment_stats WHERE processed_at > NOW() - INTERVAL '5 minutes'",
+                    "format": "table",
+                    "rawQuery": true,
+                    "refId": "A"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "velocitykmh",
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "red",
+                                "value": null
+                            },
+                            {
+                                "color": "yellow",
+                                "value": 20
+                            },
+                            {
+                                "color": "green",
+                                "value": 40
+                            }
+                        ]
+                    }
+                }
+            },
+            "options": {
+                "colorMode": "value",
+                "graphMode": "area",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ],
+                    "fields": "",
+                    "values": false
+                }
+            }
+        },
+        {
+            "id": 2,
+            "title": "🚦 Véhicules Actifs",
+            "type": "stat",
+            "gridPos": {
+                "h": 4,
+                "w": 6,
+                "x": 6,
+                "y": 2
+            },
+            "datasource": {
+                "type": "postgres",
+                "uid": "postgres-datasource"
+            },
+            "targets": [
+                {
+                    "rawSql": "SELECT SUM(vehicle_count) as value FROM traffic_segment_stats WHERE processed_at > NOW() - INTERVAL '5 minutes'",
+                    "format": "table",
+                    "rawQuery": true,
+                    "refId": "A"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "short",
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "yellow",
+                                "value": 500
+                            },
+                            {
+                                "color": "red",
+                                "value": 1000
+                            }
+                        ]
+                    }
+                }
+            }
+        },
+        {
+            "id": 3,
+            "title": "📊 Segments Actifs",
+            "type": "stat",
+            "gridPos": {
+                "h": 4,
+                "w": 6,
+                "x": 12,
+                "y": 2
+            },
+            "datasource": {
+                "type": "postgres",
+                "uid": "postgres-datasource"
+            },
+            "targets": [
+                {
+                    "rawSql": "SELECT COUNT(DISTINCT segment_id) as value FROM traffic_segment_stats WHERE processed_at > NOW() - INTERVAL '5 minutes'",
+                    "format": "table",
+                    "rawQuery": true,
+                    "refId": "A"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "blue",
+                                "value": null
+                            }
+                        ]
+                    }
+                }
+            }
+        },
+        {
+            "id": 4,
+            "title": "🌡️ Température Moyenne",
+            "type": "stat",
+            "gridPos": {
+                "h": 4,
+                "w": 6,
+                "x": 18,
+                "y": 2
+            },
+            "datasource": {
+                "type": "postgres",
+                "uid": "postgres-datasource"
+            },
+            "targets": [
+                {
+                    "rawSql": "SELECT COALESCE(AVG(temperature), 28.5) as value FROM weather_data WHERE recorded_at > NOW() - INTERVAL '1 hour'",
+                    "format": "table",
+                    "rawQuery": true,
+                    "refId": "A"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "celsius",
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "blue",
+                                "value": null
+                            },
+                            {
+                                "color": "green",
+                                "value": 25
+                            },
+                            {
+                                "color": "orange",
+                                "value": 30
+                            },
+                            {
+                                "color": "red",
+                                "value": 35
+                            }
+                        ]
+                    }
+                }
+            }
+        },
+        {
+            "id": 5,
+            "title": "📊 Niveau de Congestion Global",
+            "type": "gauge",
+            "gridPos": {
+                "h": 8,
+                "w": 8,
+                "x": 0,
+                "y": 6
+            },
+            "datasource": {
+                "type": "postgres",
+                "uid": "postgres-datasource"
+            },
+            "targets": [
+                {
+                    "rawSql": "SELECT AVG(CASE congestion_level WHEN 'severe' THEN 4 WHEN 'heavy' THEN 3 WHEN 'moderate' THEN 2 ELSE 1 END) as value FROM traffic_segment_stats WHERE processed_at > NOW() - INTERVAL '5 minutes'",
+                    "format": "table",
+                    "rawQuery": true,
+                    "refId": "A"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "min": 1,
+                    "max": 4,
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "yellow",
+                                "value": 1.5
+                            },
+                            {
+                                "color": "orange",
+                                "value": 2.5
+                            },
+                            {
+                                "color": "red",
+                                "value": 3.5
+                            }
+                        ]
+                    }
+                }
+            },
+            "options": {
+                "showThresholdLabels": true,
+                "showThresholdMarkers": true
+            }
+        },
+        {
+            "id": 6,
+            "title": "🚦 Distribution par Congestion",
+            "type": "piechart",
+            "gridPos": {
+                "h": 8,
+                "w": 8,
+                "x": 8,
+                "y": 6
+            },
+            "datasource": {
+                "type": "postgres",
+                "uid": "postgres-datasource"
+            },
+            "targets": [
+                {
+                    "rawSql": "SELECT congestion_level, COUNT(*) as count FROM traffic_segment_stats WHERE processed_at > NOW() - INTERVAL '5 minutes' GROUP BY congestion_level",
+                    "format": "table",
+                    "rawQuery": true,
+                    "refId": "A"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "palette-classic"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "light"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "fixedColor": "#73BF69",
+                                    "mode": "fixed"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "moderate"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "fixedColor": "#FADE2A",
+                                    "mode": "fixed"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "heavy"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "fixedColor": "#FF9830",
+                                    "mode": "fixed"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "severe"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "fixedColor": "#F2495C",
+                                    "mode": "fixed"
+                                }
+                            }
+                        ]
+                    }
+                ]
+            },
+            "options": {
+                "legend": {
+                    "displayMode": "table",
+                    "placement": "right",
+                    "values": [
+                        "value",
+                        "percent"
+                    ]
+                },
+                "pieType": "donut"
+            }
+        },
+        {
+            "id": 7,
+            "title": "🗺️ État des Segments Routiers",
+            "type": "table",
+            "gridPos": {
+                "h": 8,
+                "w": 8,
+                "x": 16,
+                "y": 6
+            },
+            "datasource": {
+                "type": "postgres",
+                "uid": "postgres-datasource"
+            },
+            "targets": [
+                {
+                    "rawSql": "SELECT DISTINCT ON (segment_id) segment_id, avg_speed, vehicle_count, congestion_level, processed_at FROM traffic_segment_stats WHERE processed_at > NOW() - INTERVAL '5 minutes' ORDER BY segment_id, processed_at DESC",
+                    "format": "table",
+                    "rawQuery": true,
+                    "refId": "A"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "custom": {
+                        "align": "auto",
+                        "displayMode": "auto"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "avg_speed"
+                        },
+                        "properties": [
+                            {
+                                "id": "unit",
+                                "value": "velocitykmh"
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "congestion_level"
+                        },
+                        "properties": [
+                            {
+                                "id": "custom.displayMode",
+                                "value": "color-text"
+                            },
+                            {
+                                "id": "mappings",
+                                "value": [
+                                    {
+                                        "type": "value",
+                                        "options": {
+                                            "light": {
+                                                "text": "🟢 Fluide",
+                                                "color": "green"
+                                            },
+                                            "moderate": {
+                                                "text": "🟡 Modéré",
+                                                "color": "yellow"
+                                            },
+                                            "heavy": {
+                                                "text": "🟠 Dense",
+                                                "color": "orange"
+                                            },
+                                            "severe": {
+                                                "text": "🔴 Bloqué",
+                                                "color": "red"
+                                            }
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            "options": {
+                "showHeader": true,
+                "cellHeight": "sm"
+            }
+        },
+        {
+            "id": 8,
+            "title": "📈 Évolution de la Vitesse (Dernière Heure)",
+            "type": "timeseries",
+            "gridPos": {
+                "h": 9,
+                "w": 16,
+                "x": 0,
+                "y": 14
+            },
+            "datasource": {
+                "type": "postgres",
+                "uid": "postgres-datasource"
+            },
+            "targets": [
+                {
+                    "rawSql": "SELECT processed_at as time, segment_id as metric, avg_speed as value FROM traffic_segment_stats WHERE processed_at > NOW() - INTERVAL '1 hour' ORDER BY processed_at",
+                    "format": "time_series",
+                    "rawQuery": true,
+                    "refId": "A"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "velocitykmh",
+                    "custom": {
+                        "lineWidth": 2,
+                        "fillOpacity": 10,
+                        "spanNulls": true,
+                        "drawStyle": "line",
+                        "lineInterpolation": "smooth"
+                    }
+                }
+            },
+            "options": {
+                "legend": {
+                    "displayMode": "list",
+                    "placement": "bottom"
+                },
+                "tooltip": {
+                    "mode": "multi"
+                }
+            }
+        },
+        {
+            "id": 9,
+            "title": "🚦 Vitesse par Segment",
+            "type": "bargauge",
+            "gridPos": {
+                "h": 9,
+                "w": 8,
+                "x": 16,
+                "y": 14
+            },
+            "datasource": {
+                "type": "postgres",
+                "uid": "postgres-datasource"
+            },
+            "targets": [
+                {
+                    "rawSql": "SELECT DISTINCT ON (segment_id) segment_id, avg_speed FROM traffic_segment_stats WHERE processed_at > NOW() - INTERVAL '5 minutes' ORDER BY segment_id, processed_at DESC",
+                    "format": "table",
+                    "rawQuery": true,
+                    "refId": "A"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "velocitykmh",
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "red",
+                                "value": null
+                            },
+                            {
+                                "color": "yellow",
+                                "value": 25
+                            },
+                            {
+                                "color": "green",
+                                "value": 45
+                            }
+                        ]
+                    },
+                    "min": 0,
+                    "max": 80
+                }
+            },
+            "options": {
+                "displayMode": "gradient",
+                "orientation": "horizontal",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ],
+                    "fields": "",
+                    "values": false
+                },
+                "showUnfilled": true
+            }
+        },
+        {
+            "id": 10,
+            "title": "🗺️ Carte Interactive - Trafic en Direct",
+            "type": "text",
+            "gridPos": {
+                "h": 4,
+                "w": 24,
+                "x": 0,
+                "y": 32
+            },
+            "options": {
+                "mode": "markdown",
+                "content": "## 🌍 [➡️ Cliquez ici pour visualiser le trafic sur la carte interactive](http://localhost:8000/map)\n\n*La carte Leaflet affiche les segments routiers avec leurs niveaux de congestion en temps réel, permet de visualiser les prédictions ML et de calculer des itinéraires optimisés.*"
+            }
+        }
+    ],
+    "refresh": "5s",
+    "schemaVersion": 38,
+    "style": "dark",
+    "tags": [
+        "traffic",
+        "abidjan",
+        "smart-city"
+    ],
+    "templating": {
+        "list": []
+    },
+    "time": {
+        "from": "now-1h",
+        "to": "now"
+    },
+    "timepicker": {},
+    "timezone": "browser",
+    "title": "🚗 Abidjan Traffic Dashboard (Real Data)",
+    "uid": "abidjan-traffic",
+    "version": 4,
+    "weekStart": "monday"
+}

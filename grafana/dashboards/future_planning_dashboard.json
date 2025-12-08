@@ -1,0 +1,686 @@
+{
+    "annotations": {
+        "list": []
+    },
+    "description": "Planification de trajets futurs - Prédictions basées sur les tendances historiques",
+    "editable": true,
+    "fiscalYearStartMonth": 0,
+    "graphTooltip": 0,
+    "id": null,
+    "links": [],
+    "panels": [
+        {
+            "type": "text",
+            "title": "",
+            "gridPos": {
+                "h": 3,
+                "w": 24,
+                "x": 0,
+                "y": 0
+            },
+            "id": 1,
+            "options": {
+                "mode": "markdown",
+                "content": "# 🔮 Planification de Trajets Futurs - Abidjan Smart City\n**Prédictions basées sur:** Tendances historiques | Patterns temporels | Événements récurrents\n\n> Planifiez votre trajet à l'avance et trouvez le meilleur moment pour partir !"
+            }
+        },
+        {
+            "type": "stat",
+            "title": "📊 Trajets Planifiés (24h)",
+            "gridPos": {
+                "h": 4,
+                "w": 6,
+                "x": 0,
+                "y": 3
+            },
+            "id": 2,
+            "datasource": {
+                "type": "postgres",
+                "uid": "postgres-datasource"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "blue",
+                                "value": null
+                            }
+                        ]
+                    }
+                }
+            },
+            "targets": [
+                {
+                    "rawSql": "SELECT COUNT(*) as count FROM future_trip_plans WHERE created_at > NOW() - INTERVAL '24 hours'",
+                    "format": "table",
+                    "rawQuery": true,
+                    "refId": "A"
+                }
+            ]
+        },
+        {
+            "type": "gauge",
+            "title": "🎯 Confiance Moyenne des Prédictions",
+            "gridPos": {
+                "h": 4,
+                "w": 6,
+                "x": 6,
+                "y": 3
+            },
+            "id": 3,
+            "datasource": {
+                "type": "postgres",
+                "uid": "postgres-datasource"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "thresholds": {
+                        "mode": "percentage",
+                        "steps": [
+                            {
+                                "color": "red",
+                                "value": null
+                            },
+                            {
+                                "color": "yellow",
+                                "value": 60
+                            },
+                            {
+                                "color": "green",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "unit": "percentunit",
+                    "min": 0,
+                    "max": 1
+                }
+            },
+            "targets": [
+                {
+                    "rawSql": "SELECT COALESCE(AVG(confidence), 0.85) as confidence FROM future_trip_plans WHERE created_at > NOW() - INTERVAL '24 hours'",
+                    "format": "table",
+                    "rawQuery": true,
+                    "refId": "A"
+                }
+            ]
+        },
+        {
+            "type": "stat",
+            "title": "⏱️ Durée Moyenne Prédite",
+            "gridPos": {
+                "h": 4,
+                "w": 6,
+                "x": 12,
+                "y": 3
+            },
+            "id": 4,
+            "datasource": {
+                "type": "postgres",
+                "uid": "postgres-datasource"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "yellow",
+                                "value": 30
+                            },
+                            {
+                                "color": "red",
+                                "value": 60
+                            }
+                        ]
+                    },
+                    "unit": "m"
+                }
+            },
+            "targets": [
+                {
+                    "rawSql": "SELECT COALESCE(AVG(estimated_duration), 25) as duration FROM future_trip_plans WHERE created_at > NOW() - INTERVAL '24 hours'",
+                    "format": "table",
+                    "rawQuery": true,
+                    "refId": "A"
+                }
+            ]
+        },
+        {
+            "type": "stat",
+            "title": "🗺️ Segments Populaires",
+            "gridPos": {
+                "h": 4,
+                "w": 6,
+                "x": 18,
+                "y": 3
+            },
+            "id": 5,
+            "datasource": {
+                "type": "postgres",
+                "uid": "postgres-datasource"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "purple",
+                                "value": null
+                            }
+                        ]
+                    }
+                }
+            },
+            "targets": [
+                {
+                    "rawSql": "SELECT COUNT(DISTINCT origin_segment) + COUNT(DISTINCT destination_segment) as segments FROM future_trip_plans WHERE created_at > NOW() - INTERVAL '24 hours'",
+                    "format": "table",
+                    "rawQuery": true,
+                    "refId": "A"
+                }
+            ]
+        },
+        {
+            "type": "text",
+            "title": "📅 Comment Utiliser",
+            "gridPos": {
+                "h": 6,
+                "w": 8,
+                "x": 0,
+                "y": 7
+            },
+            "id": 6,
+            "options": {
+                "mode": "markdown",
+                "content": "### 🚀 Planifier un Trajet Futur\n\n**Via API:**\n```\nGET /routes/future-plan?\n  origin=SEG001&\n  destination=SEG008&\n  departure_time=10:00\n```\n\n**Via Carte Interactive:**\n[Ouvrir la Carte](http://localhost:8000/future-map)\n\n**Trouver le Meilleur Horaire:**\n```\nGET /traffic/best-departure-time?\n  origin=SEG003&\n  destination=SEG007\n```"
+            }
+        },
+        {
+            "type": "barchart",
+            "title": "📊 Prévision Horaire - Vitesse Moyenne par Heure",
+            "gridPos": {
+                "h": 6,
+                "w": 16,
+                "x": 8,
+                "y": 7
+            },
+            "id": 7,
+            "datasource": {
+                "type": "postgres",
+                "uid": "postgres-datasource"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "red",
+                                "value": null
+                            },
+                            {
+                                "color": "yellow",
+                                "value": 25
+                            },
+                            {
+                                "color": "green",
+                                "value": 40
+                            }
+                        ]
+                    },
+                    "unit": "velocitykmh"
+                }
+            },
+            "options": {
+                "barRadius": 0.2,
+                "barWidth": 0.7,
+                "orientation": "vertical",
+                "showValue": "auto"
+            },
+            "targets": [
+                {
+                    "rawSql": "SELECT EXTRACT(HOUR FROM processed_at)::text || 'h' as hour, AVG(avg_speed) as speed FROM traffic_segment_stats WHERE processed_at > NOW() - INTERVAL '7 days' GROUP BY EXTRACT(HOUR FROM processed_at) ORDER BY EXTRACT(HOUR FROM processed_at)",
+                    "format": "table",
+                    "rawQuery": true,
+                    "refId": "A"
+                }
+            ]
+        },
+        {
+            "type": "table",
+            "title": "📋 Trajets Planifiés Récents",
+            "gridPos": {
+                "h": 8,
+                "w": 12,
+                "x": 0,
+                "y": 13
+            },
+            "id": 8,
+            "datasource": {
+                "type": "postgres",
+                "uid": "postgres-datasource"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "custom": {
+                        "align": "auto"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "estimated_duration"
+                        },
+                        "properties": [
+                            {
+                                "id": "unit",
+                                "value": "m"
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "confidence"
+                        },
+                        "properties": [
+                            {
+                                "id": "unit",
+                                "value": "percentunit"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "options": {
+                "showHeader": true,
+                "cellHeight": "sm"
+            },
+            "targets": [
+                {
+                    "rawSql": "SELECT origin_segment, destination_segment, TO_CHAR(departure_time, 'DD/MM HH24:MI') as depart, estimated_duration, confidence FROM future_trip_plans ORDER BY created_at DESC LIMIT 15",
+                    "format": "table",
+                    "rawQuery": true,
+                    "refId": "A"
+                }
+            ]
+        },
+        {
+            "type": "piechart",
+            "title": "🚦 Distribution Congestion par Heure (Historique)",
+            "gridPos": {
+                "h": 8,
+                "w": 6,
+                "x": 12,
+                "y": 13
+            },
+            "id": 9,
+            "datasource": {
+                "type": "postgres",
+                "uid": "postgres-datasource"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "palette-classic"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "Matin (6-9h)"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "fixedColor": "#FF9830",
+                                    "mode": "fixed"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "Journée (10-16h)"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "fixedColor": "#73BF69",
+                                    "mode": "fixed"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "Soir (17-20h)"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "fixedColor": "#F2495C",
+                                    "mode": "fixed"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "Nuit (21-5h)"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "fixedColor": "#5794F2",
+                                    "mode": "fixed"
+                                }
+                            }
+                        ]
+                    }
+                ]
+            },
+            "options": {
+                "legend": {
+                    "displayMode": "list",
+                    "placement": "right"
+                },
+                "pieType": "donut"
+            },
+            "targets": [
+                {
+                    "rawSql": "SELECT CASE WHEN EXTRACT(HOUR FROM processed_at) BETWEEN 6 AND 9 THEN 'Matin (6-9h)' WHEN EXTRACT(HOUR FROM processed_at) BETWEEN 10 AND 16 THEN 'Journée (10-16h)' WHEN EXTRACT(HOUR FROM processed_at) BETWEEN 17 AND 20 THEN 'Soir (17-20h)' ELSE 'Nuit (21-5h)' END as period, COUNT(*) as count FROM traffic_segment_stats WHERE processed_at > NOW() - INTERVAL '7 days' AND congestion_level IN ('heavy', 'severe') GROUP BY period",
+                    "format": "table",
+                    "rawQuery": true,
+                    "refId": "A"
+                }
+            ]
+        },
+        {
+            "type": "bargauge",
+            "title": "🎯 Meilleurs Horaires de Départ",
+            "gridPos": {
+                "h": 8,
+                "w": 6,
+                "x": 18,
+                "y": 13
+            },
+            "id": 10,
+            "datasource": {
+                "type": "postgres",
+                "uid": "postgres-datasource"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "yellow",
+                                "value": 30
+                            },
+                            {
+                                "color": "red",
+                                "value": 20
+                            }
+                        ]
+                    },
+                    "unit": "velocitykmh",
+                    "min": 0,
+                    "max": 60
+                }
+            },
+            "options": {
+                "displayMode": "gradient",
+                "orientation": "horizontal",
+                "showUnfilled": true
+            },
+            "targets": [
+                {
+                    "rawSql": "SELECT EXTRACT(HOUR FROM processed_at)::text || 'h' as hour, AVG(avg_speed) as speed FROM traffic_segment_stats WHERE processed_at > NOW() - INTERVAL '7 days' GROUP BY EXTRACT(HOUR FROM processed_at) ORDER BY AVG(avg_speed) DESC LIMIT 8",
+                    "format": "table",
+                    "rawQuery": true,
+                    "refId": "A"
+                }
+            ]
+        },
+        {
+            "type": "timeseries",
+            "title": "📈 Tendance Vitesse par Jour de la Semaine",
+            "gridPos": {
+                "h": 8,
+                "w": 16,
+                "x": 0,
+                "y": 21
+            },
+            "id": 11,
+            "datasource": {
+                "type": "postgres",
+                "uid": "postgres-datasource"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "unit": "velocitykmh",
+                    "custom": {
+                        "drawStyle": "line",
+                        "lineInterpolation": "smooth",
+                        "fillOpacity": 20,
+                        "lineWidth": 2
+                    }
+                }
+            },
+            "options": {
+                "legend": {
+                    "displayMode": "list",
+                    "placement": "bottom"
+                },
+                "tooltip": {
+                    "mode": "multi"
+                }
+            },
+            "targets": [
+                {
+                    "rawSql": "SELECT processed_at as time, CASE EXTRACT(DOW FROM processed_at) WHEN 0 THEN 'Dimanche' WHEN 1 THEN 'Lundi' WHEN 2 THEN 'Mardi' WHEN 3 THEN 'Mercredi' WHEN 4 THEN 'Jeudi' WHEN 5 THEN 'Vendredi' ELSE 'Samedi' END as metric, avg_speed as value FROM traffic_segment_stats WHERE processed_at > NOW() - INTERVAL '3 days' ORDER BY processed_at",
+                    "format": "time_series",
+                    "rawQuery": true,
+                    "refId": "A"
+                }
+            ]
+        },
+        {
+            "type": "text",
+            "title": "⚠️ Événements Récurrents à Considérer",
+            "gridPos": {
+                "h": 8,
+                "w": 8,
+                "x": 16,
+                "y": 21
+            },
+            "id": 12,
+            "options": {
+                "mode": "markdown",
+                "content": "### 📅 Événements qui Affectent le Trafic\n\n| Jour | Horaire | Événement | Impact |\n|------|---------|-----------|--------|\n| **Lundi** | 7h-9h | Début semaine | 🔴 -15% |\n| **Mardi** | 8h-11h | Jour marché | 🟠 -10% |\n| **Vendredi** | 12h-14h | Prière | 🟡 -8% |\n| **Vendredi** | 16h-19h | Départs WE | 🔴 -20% |\n\n### 💡 Conseils\n- **Évitez** les heures de pointe (7-9h, 17-19h)\n- **Privilégiez** la mi-journée (10h-16h)\n- **Week-end** = trafic réduit de ~25%"
+            }
+        },
+        {
+            "type": "text",
+            "title": "🗺️ Carte Interactive",
+            "gridPos": {
+                "h": 3,
+                "w": 24,
+                "x": 0,
+                "y": 29
+            },
+            "id": 13,
+            "options": {
+                "mode": "markdown",
+                "content": "### 🌍 [➡️ Ouvrir la Carte Interactive pour Planifier un Trajet Futur](http://localhost:8000/future-map)\n\n*La carte permet de sélectionner un départ, une arrivée et une heure de départ pour obtenir une prédiction complète.*"
+            }
+        }
+    ],
+    "refresh": "30s",
+    "schemaVersion": 38,
+    "style": "dark",
+    "tags": [
+        "future",
+        "planning",
+        "predictions",
+        "abidjan"
+    ],
+    "templating": {
+        "list": [
+            {
+                "current": {
+                    "selected": true,
+                    "text": "SEG001",
+                    "value": "SEG001"
+                },
+                "hide": 0,
+                "name": "origin",
+                "options": [
+                    {
+                        "selected": true,
+                        "text": "SEG001 - Pont HKB",
+                        "value": "SEG001"
+                    },
+                    {
+                        "selected": false,
+                        "text": "SEG002 - Boulevard VGE",
+                        "value": "SEG002"
+                    },
+                    {
+                        "selected": false,
+                        "text": "SEG003 - Autoroute du Nord",
+                        "value": "SEG003"
+                    },
+                    {
+                        "selected": false,
+                        "text": "SEG004 - Rue Lepic",
+                        "value": "SEG004"
+                    },
+                    {
+                        "selected": false,
+                        "text": "SEG005 - Bd Nangui Abrogoua",
+                        "value": "SEG005"
+                    },
+                    {
+                        "selected": false,
+                        "text": "SEG006 - Pont Général de Gaulle",
+                        "value": "SEG006"
+                    },
+                    {
+                        "selected": false,
+                        "text": "SEG007 - Boulevard de Marseille",
+                        "value": "SEG007"
+                    },
+                    {
+                        "selected": false,
+                        "text": "SEG008 - Voie Express Yopougon",
+                        "value": "SEG008"
+                    }
+                ],
+                "type": "custom",
+                "label": "🚀 Départ"
+            },
+            {
+                "current": {
+                    "selected": true,
+                    "text": "SEG008",
+                    "value": "SEG008"
+                },
+                "hide": 0,
+                "name": "destination",
+                "options": [
+                    {
+                        "selected": false,
+                        "text": "SEG001 - Pont HKB",
+                        "value": "SEG001"
+                    },
+                    {
+                        "selected": false,
+                        "text": "SEG002 - Boulevard VGE",
+                        "value": "SEG002"
+                    },
+                    {
+                        "selected": false,
+                        "text": "SEG003 - Autoroute du Nord",
+                        "value": "SEG003"
+                    },
+                    {
+                        "selected": false,
+                        "text": "SEG004 - Rue Lepic",
+                        "value": "SEG004"
+                    },
+                    {
+                        "selected": false,
+                        "text": "SEG005 - Bd Nangui Abrogoua",
+                        "value": "SEG005"
+                    },
+                    {
+                        "selected": false,
+                        "text": "SEG006 - Pont Général de Gaulle",
+                        "value": "SEG006"
+                    },
+                    {
+                        "selected": false,
+                        "text": "SEG007 - Boulevard de Marseille",
+                        "value": "SEG007"
+                    },
+                    {
+                        "selected": true,
+                        "text": "SEG008 - Voie Express Yopougon",
+                        "value": "SEG008"
+                    }
+                ],
+                "type": "custom",
+                "label": "🏁 Arrivée"
+            }
+        ]
+    },
+    "time": {
+        "from": "now-7d",
+        "to": "now"
+    },
+    "timepicker": {},
+    "timezone": "browser",
+    "title": "🔮 Planification Trajets Futurs",
+    "uid": "future-planning-dashboard",
+    "version": 1
+}

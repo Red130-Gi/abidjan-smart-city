@@ -1,0 +1,763 @@
+{
+    "annotations": {
+        "list": []
+    },
+    "description": "Dashboard de visualisation et comparaison d'itinéraires optimisés",
+    "editable": true,
+    "fiscalYearStartMonth": 0,
+    "graphTooltip": 0,
+    "id": null,
+    "links": [],
+    "panels": [
+        {
+            "type": "text",
+            "title": "",
+            "gridPos": {
+                "h": 2,
+                "w": 24,
+                "x": 0,
+                "y": 0
+            },
+            "id": 1,
+            "options": {
+                "mode": "markdown",
+                "content": "# 🗺️ Optimisation d'Itinéraires - Abidjan Smart City\n**Algorithme:** A* avec coûts dynamiques | [🌍 Ouvrir la Carte Interactive](http://localhost:8000/map)"
+            }
+        },
+        {
+            "type": "stat",
+            "title": "⏱️ Temps Moyen Économisé",
+            "gridPos": {
+                "h": 5,
+                "w": 6,
+                "x": 0,
+                "y": 2
+            },
+            "id": 2,
+            "datasource": {
+                "type": "postgres",
+                "uid": "postgres-datasource"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "unit": "m"
+                }
+            },
+            "options": {
+                "colorMode": "value",
+                "graphMode": "area",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "reduceOptions": {
+                    "calcs": [
+                        "mean"
+                    ],
+                    "fields": "",
+                    "values": false
+                }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "postgres",
+                        "uid": "postgres-datasource"
+                    },
+                    "format": "table",
+                    "rawQuery": true,
+                    "rawSql": "SELECT COALESCE(AVG(time_saved_minutes), 0) as time_saved FROM optimized_routes WHERE route_type = 'optimized' AND created_at > NOW() - INTERVAL '1 hour'",
+                    "refId": "A"
+                }
+            ]
+        },
+        {
+            "type": "stat",
+            "title": "🛣️ Routes Calculées (1h)",
+            "gridPos": {
+                "h": 5,
+                "w": 6,
+                "x": 6,
+                "y": 2
+            },
+            "id": 3,
+            "datasource": {
+                "type": "postgres",
+                "uid": "postgres-datasource"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "blue",
+                                "value": null
+                            }
+                        ]
+                    }
+                }
+            },
+            "options": {
+                "colorMode": "background",
+                "graphMode": "none",
+                "justifyMode": "center",
+                "orientation": "auto",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ],
+                    "fields": "",
+                    "values": false
+                }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "postgres",
+                        "uid": "postgres-datasource"
+                    },
+                    "format": "table",
+                    "rawQuery": true,
+                    "rawSql": "SELECT COUNT(DISTINCT request_id) as routes FROM route_requests WHERE created_at > NOW() - INTERVAL '1 hour'",
+                    "refId": "A"
+                }
+            ]
+        },
+        {
+            "type": "gauge",
+            "title": "🌍 CO2 Économisé (kg)",
+            "gridPos": {
+                "h": 5,
+                "w": 6,
+                "x": 12,
+                "y": 2
+            },
+            "id": 4,
+            "datasource": {
+                "type": "postgres",
+                "uid": "postgres-datasource"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "yellow",
+                                "value": null
+                            },
+                            {
+                                "color": "green",
+                                "value": 5
+                            }
+                        ]
+                    },
+                    "unit": "massg",
+                    "min": 0,
+                    "max": 50
+                }
+            },
+            "options": {
+                "reduceOptions": {
+                    "calcs": [
+                        "sum"
+                    ],
+                    "fields": "",
+                    "values": false
+                },
+                "showThresholdLabels": false,
+                "showThresholdMarkers": true
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "postgres",
+                        "uid": "postgres-datasource"
+                    },
+                    "format": "table",
+                    "rawQuery": true,
+                    "rawSql": "SELECT COALESCE(SUM(CASE WHEN route_type='normal' THEN co2_emissions_kg ELSE 0 END) - SUM(CASE WHEN route_type='optimized' THEN co2_emissions_kg ELSE 0 END), 0) as co2_saved FROM optimized_routes WHERE created_at > NOW() - INTERVAL '1 hour'",
+                    "refId": "A"
+                }
+            ]
+        },
+        {
+            "type": "stat",
+            "title": "⛽ Carburant Économisé (L)",
+            "gridPos": {
+                "h": 5,
+                "w": 6,
+                "x": 18,
+                "y": 2
+            },
+            "id": 5,
+            "datasource": {
+                "type": "postgres",
+                "uid": "postgres-datasource"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "orange",
+                                "value": null
+                            },
+                            {
+                                "color": "green",
+                                "value": 2
+                            }
+                        ]
+                    },
+                    "unit": "litre",
+                    "decimals": 1
+                }
+            },
+            "options": {
+                "colorMode": "value",
+                "graphMode": "area",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "reduceOptions": {
+                    "calcs": [
+                        "sum"
+                    ],
+                    "fields": "",
+                    "values": false
+                }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "postgres",
+                        "uid": "postgres-datasource"
+                    },
+                    "format": "table",
+                    "rawQuery": true,
+                    "rawSql": "SELECT COALESCE(SUM(CASE WHEN route_type='normal' THEN fuel_consumption_liters ELSE 0 END) - SUM(CASE WHEN route_type='optimized' THEN fuel_consumption_liters ELSE 0 END), 0) as fuel_saved FROM optimized_routes WHERE created_at > NOW() - INTERVAL '1 hour'",
+                    "refId": "A"
+                }
+            ]
+        },
+        {
+            "type": "text",
+            "title": "🗺️ Carte Interactive",
+            "gridPos": {
+                "h": 3,
+                "w": 24,
+                "x": 0,
+                "y": 7
+            },
+            "id": 6,
+            "options": {
+                "mode": "markdown",
+                "content": "### 🌍 [➡️ Cliquez ici pour ouvrir la Carte Interactive d'Itinéraires](http://localhost:8000/map)\n\n*Sélectionnez un point de départ et d'arrivée pour calculer et comparer les itinéraires normal vs optimisé.*"
+            }
+        },
+        {
+            "type": "bargauge",
+            "title": "⏱️ Comparaison Temps (Normal vs Optimisé)",
+            "gridPos": {
+                "h": 7,
+                "w": 12,
+                "x": 0,
+                "y": 10
+            },
+            "id": 7,
+            "datasource": {
+                "type": "postgres",
+                "uid": "postgres-datasource"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "yellow",
+                                "value": 15
+                            },
+                            {
+                                "color": "red",
+                                "value": 25
+                            }
+                        ]
+                    },
+                    "unit": "m",
+                    "min": 0,
+                    "max": 40
+                }
+            },
+            "options": {
+                "displayMode": "gradient",
+                "minVizHeight": 10,
+                "orientation": "horizontal",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ],
+                    "fields": "",
+                    "values": false
+                },
+                "showUnfilled": true
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "postgres",
+                        "uid": "postgres-datasource"
+                    },
+                    "format": "table",
+                    "rawQuery": true,
+                    "rawSql": "SELECT route_type, AVG(estimated_duration_minutes) as duration FROM optimized_routes WHERE created_at > NOW() - INTERVAL '1 hour' GROUP BY route_type",
+                    "refId": "A"
+                }
+            ]
+        },
+        {
+            "type": "table",
+            "title": "📊 Détails des Itinéraires Récents",
+            "gridPos": {
+                "h": 7,
+                "w": 12,
+                "x": 12,
+                "y": 10
+            },
+            "id": 8,
+            "datasource": {
+                "type": "postgres",
+                "uid": "postgres-datasource"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "custom": {
+                        "align": "auto",
+                        "displayMode": "auto"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "time_saved_minutes"
+                        },
+                        "properties": [
+                            {
+                                "id": "unit",
+                                "value": "m"
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "total_distance_km"
+                        },
+                        "properties": [
+                            {
+                                "id": "unit",
+                                "value": "lengthkm"
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "estimated_duration_minutes"
+                        },
+                        "properties": [
+                            {
+                                "id": "unit",
+                                "value": "m"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "options": {
+                "showHeader": true,
+                "cellHeight": "sm"
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "postgres",
+                        "uid": "postgres-datasource"
+                    },
+                    "format": "table",
+                    "rawQuery": true,
+                    "rawSql": "SELECT r.origin_name, r.destination_name, o.route_type, o.total_distance_km, o.estimated_duration_minutes, o.time_saved_minutes FROM optimized_routes o JOIN route_requests r ON o.request_id = r.request_id WHERE o.created_at > NOW() - INTERVAL '1 hour' ORDER BY o.created_at DESC LIMIT 10",
+                    "refId": "A"
+                }
+            ]
+        },
+        {
+            "type": "piechart",
+            "title": "🚦 Congestion sur Segments Utilisés",
+            "gridPos": {
+                "h": 8,
+                "w": 8,
+                "x": 0,
+                "y": 17
+            },
+            "id": 9,
+            "datasource": {
+                "type": "postgres",
+                "uid": "postgres-datasource"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "palette-classic"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "light"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "fixedColor": "#73BF69",
+                                    "mode": "fixed"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "moderate"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "fixedColor": "#FADE2A",
+                                    "mode": "fixed"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "heavy"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "fixedColor": "#FF9830",
+                                    "mode": "fixed"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "severe"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "fixedColor": "#F2495C",
+                                    "mode": "fixed"
+                                }
+                            }
+                        ]
+                    }
+                ]
+            },
+            "options": {
+                "legend": {
+                    "displayMode": "list",
+                    "placement": "right",
+                    "showLegend": true
+                },
+                "pieType": "donut",
+                "reduceOptions": {
+                    "calcs": [
+                        "sum"
+                    ],
+                    "fields": "",
+                    "values": false
+                }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "postgres",
+                        "uid": "postgres-datasource"
+                    },
+                    "format": "table",
+                    "rawQuery": true,
+                    "rawSql": "SELECT congestion_level, COUNT(*) as count FROM route_segments rs JOIN optimized_routes o ON rs.route_id = o.id WHERE o.created_at > NOW() - INTERVAL '1 hour' GROUP BY congestion_level",
+                    "refId": "A"
+                }
+            ]
+        },
+        {
+            "type": "barchart",
+            "title": "📍 Segments les Plus Utilisés",
+            "gridPos": {
+                "h": 8,
+                "w": 8,
+                "x": 8,
+                "y": 17
+            },
+            "id": 10,
+            "datasource": {
+                "type": "postgres",
+                "uid": "postgres-datasource"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "custom": {
+                        "axisCenteredZero": false,
+                        "fillOpacity": 80,
+                        "gradientMode": "none"
+                    }
+                }
+            },
+            "options": {
+                "barRadius": 0.3,
+                "barWidth": 0.6,
+                "groupWidth": 0.7,
+                "legend": {
+                    "displayMode": "list",
+                    "placement": "bottom",
+                    "showLegend": false
+                },
+                "orientation": "horizontal",
+                "showValue": "auto",
+                "stacking": "none"
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "postgres",
+                        "uid": "postgres-datasource"
+                    },
+                    "format": "table",
+                    "rawQuery": true,
+                    "rawSql": "SELECT segment_name, COUNT(*) as usage_count FROM route_segments rs JOIN optimized_routes o ON rs.route_id = o.id WHERE o.created_at > NOW() - INTERVAL '1 hour' GROUP BY segment_name ORDER BY COUNT(*) DESC LIMIT 8",
+                    "refId": "A"
+                }
+            ]
+        },
+        {
+            "type": "timeseries",
+            "title": "📈 Temps Économisé par Heure",
+            "gridPos": {
+                "h": 8,
+                "w": 8,
+                "x": 16,
+                "y": 17
+            },
+            "id": 11,
+            "datasource": {
+                "type": "postgres",
+                "uid": "postgres-datasource"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "custom": {
+                        "drawStyle": "bars",
+                        "fillOpacity": 60
+                    },
+                    "unit": "m"
+                }
+            },
+            "options": {
+                "legend": {
+                    "displayMode": "list",
+                    "placement": "bottom",
+                    "showLegend": true
+                },
+                "tooltip": {
+                    "mode": "single"
+                }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "postgres",
+                        "uid": "postgres-datasource"
+                    },
+                    "format": "time_series",
+                    "rawQuery": true,
+                    "rawSql": "SELECT date_trunc('hour', created_at) as time, SUM(time_saved_minutes) as time_saved FROM optimized_routes WHERE route_type = 'optimized' AND created_at > NOW() - INTERVAL '24 hours' GROUP BY date_trunc('hour', created_at) ORDER BY time",
+                    "refId": "A"
+                }
+            ]
+        }
+    ],
+    "refresh": "10s",
+    "schemaVersion": 38,
+    "style": "dark",
+    "tags": [
+        "routes",
+        "optimization",
+        "traffic",
+        "abidjan"
+    ],
+    "templating": {
+        "list": [
+            {
+                "current": {
+                    "selected": true,
+                    "text": "SEG001",
+                    "value": "SEG001"
+                },
+                "hide": 0,
+                "name": "origin",
+                "options": [
+                    {
+                        "selected": true,
+                        "text": "SEG001 - Pont HKB",
+                        "value": "SEG001"
+                    },
+                    {
+                        "selected": false,
+                        "text": "SEG002 - Boulevard VGE",
+                        "value": "SEG002"
+                    },
+                    {
+                        "selected": false,
+                        "text": "SEG003 - Autoroute du Nord",
+                        "value": "SEG003"
+                    },
+                    {
+                        "selected": false,
+                        "text": "SEG004 - Rue Lepic",
+                        "value": "SEG004"
+                    },
+                    {
+                        "selected": false,
+                        "text": "SEG005 - Bd Nangui Abrogoua",
+                        "value": "SEG005"
+                    },
+                    {
+                        "selected": false,
+                        "text": "SEG006 - Pont Général de Gaulle",
+                        "value": "SEG006"
+                    },
+                    {
+                        "selected": false,
+                        "text": "SEG007 - Boulevard de Marseille",
+                        "value": "SEG007"
+                    },
+                    {
+                        "selected": false,
+                        "text": "SEG008 - Voie Express Yopougon",
+                        "value": "SEG008"
+                    }
+                ],
+                "type": "custom",
+                "label": "🚀 Départ"
+            },
+            {
+                "current": {
+                    "selected": true,
+                    "text": "SEG008",
+                    "value": "SEG008"
+                },
+                "hide": 0,
+                "name": "destination",
+                "options": [
+                    {
+                        "selected": false,
+                        "text": "SEG001 - Pont HKB",
+                        "value": "SEG001"
+                    },
+                    {
+                        "selected": false,
+                        "text": "SEG002 - Boulevard VGE",
+                        "value": "SEG002"
+                    },
+                    {
+                        "selected": false,
+                        "text": "SEG003 - Autoroute du Nord",
+                        "value": "SEG003"
+                    },
+                    {
+                        "selected": false,
+                        "text": "SEG004 - Rue Lepic",
+                        "value": "SEG004"
+                    },
+                    {
+                        "selected": false,
+                        "text": "SEG005 - Bd Nangui Abrogoua",
+                        "value": "SEG005"
+                    },
+                    {
+                        "selected": false,
+                        "text": "SEG006 - Pont Général de Gaulle",
+                        "value": "SEG006"
+                    },
+                    {
+                        "selected": false,
+                        "text": "SEG007 - Boulevard de Marseille",
+                        "value": "SEG007"
+                    },
+                    {
+                        "selected": true,
+                        "text": "SEG008 - Voie Express Yopougon",
+                        "value": "SEG008"
+                    }
+                ],
+                "type": "custom",
+                "label": "🏁 Arrivée"
+            }
+        ]
+    },
+    "time": {
+        "from": "now-6h",
+        "to": "now"
+    },
+    "timepicker": {},
+    "timezone": "browser",
+    "title": "🗺️ Optimisation d'Itinéraires",
+    "uid": "routes-dashboard",
+    "version": 1
+}

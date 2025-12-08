@@ -1,0 +1,965 @@
+{
+    "annotations": {
+        "list": []
+    },
+    "description": "Dashboard de visualisation des prédictions ML de trafic",
+    "editable": true,
+    "fiscalYearStartMonth": 0,
+    "graphTooltip": 0,
+    "id": null,
+    "links": [],
+    "panels": [
+        {
+            "type": "text",
+            "title": "",
+            "gridPos": {
+                "h": 2,
+                "w": 24,
+                "x": 0,
+                "y": 0
+            },
+            "id": 1,
+            "options": {
+                "mode": "markdown",
+                "content": "# 🔮 Prédictions de Trafic - Abidjan Smart City\n**Modèles ML:** XGBoost + Random Forest | **Mise à jour:** 10s | [🌍 Carte Interactive](http://localhost:8000/map)"
+            }
+        },
+        {
+            "type": "gauge",
+            "title": "🎯 Confiance Moyenne des Prédictions",
+            "gridPos": {
+                "h": 6,
+                "w": 6,
+                "x": 0,
+                "y": 2
+            },
+            "id": 2,
+            "datasource": {
+                "type": "postgres",
+                "uid": "postgres-datasource"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "thresholds": {
+                        "mode": "percentage",
+                        "steps": [
+                            {
+                                "color": "red",
+                                "value": null
+                            },
+                            {
+                                "color": "orange",
+                                "value": 50
+                            },
+                            {
+                                "color": "yellow",
+                                "value": 70
+                            },
+                            {
+                                "color": "green",
+                                "value": 85
+                            }
+                        ]
+                    },
+                    "unit": "percentunit",
+                    "min": 0,
+                    "max": 1
+                }
+            },
+            "options": {
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ],
+                    "fields": "",
+                    "values": false
+                },
+                "showThresholdLabels": false,
+                "showThresholdMarkers": true
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "postgres",
+                        "uid": "postgres-datasource"
+                    },
+                    "format": "table",
+                    "rawQuery": true,
+                    "rawSql": "SELECT COALESCE(AVG(confidence_score), 0.85) as confidence FROM traffic_predictions WHERE prediction_time > NOW() - INTERVAL '10 minutes'",
+                    "refId": "A"
+                }
+            ]
+        },
+        {
+            "type": "stat",
+            "title": "⏱️ Horizon Max (min)",
+            "gridPos": {
+                "h": 3,
+                "w": 6,
+                "x": 6,
+                "y": 2
+            },
+            "id": 3,
+            "datasource": {
+                "type": "postgres",
+                "uid": "postgres-datasource"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "blue",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "unit": "none"
+                }
+            },
+            "options": {
+                "colorMode": "value",
+                "graphMode": "none",
+                "justifyMode": "auto",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ],
+                    "fields": "",
+                    "values": false
+                }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "postgres",
+                        "uid": "postgres-datasource"
+                    },
+                    "format": "table",
+                    "rawQuery": true,
+                    "rawSql": "SELECT COALESCE(MAX(horizon_minutes), 60) as horizon FROM traffic_predictions WHERE prediction_time > NOW() - INTERVAL '10 minutes'",
+                    "refId": "A"
+                }
+            ]
+        },
+        {
+            "type": "stat",
+            "title": "📊 Prédictions Actives",
+            "gridPos": {
+                "h": 3,
+                "w": 6,
+                "x": 6,
+                "y": 5
+            },
+            "id": 4,
+            "datasource": {
+                "type": "postgres",
+                "uid": "postgres-datasource"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            }
+                        ]
+                    }
+                }
+            },
+            "options": {
+                "colorMode": "value",
+                "graphMode": "area",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ],
+                    "fields": "",
+                    "values": false
+                }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "postgres",
+                        "uid": "postgres-datasource"
+                    },
+                    "format": "table",
+                    "rawQuery": true,
+                    "rawSql": "SELECT COUNT(*) as count FROM traffic_predictions WHERE prediction_time > NOW() - INTERVAL '10 minutes'",
+                    "refId": "A"
+                }
+            ]
+        },
+        {
+            "type": "stat",
+            "title": "⚠️ Anomalies Prédites",
+            "gridPos": {
+                "h": 6,
+                "w": 6,
+                "x": 12,
+                "y": 2
+            },
+            "id": 5,
+            "datasource": {
+                "type": "postgres",
+                "uid": "postgres-datasource"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "yellow",
+                                "value": 1
+                            },
+                            {
+                                "color": "red",
+                                "value": 5
+                            }
+                        ]
+                    }
+                }
+            },
+            "options": {
+                "colorMode": "background",
+                "graphMode": "none",
+                "justifyMode": "center",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ],
+                    "fields": "",
+                    "values": false
+                }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "postgres",
+                        "uid": "postgres-datasource"
+                    },
+                    "format": "table",
+                    "rawQuery": true,
+                    "rawSql": "SELECT COUNT(*) as count FROM predicted_anomalies WHERE expected_start > NOW() - INTERVAL '1 hour'",
+                    "refId": "A"
+                }
+            ]
+        },
+        {
+            "type": "gauge",
+            "title": "🚀 Vitesse Moyenne Prédite (15 min)",
+            "gridPos": {
+                "h": 6,
+                "w": 6,
+                "x": 18,
+                "y": 2
+            },
+            "id": 6,
+            "datasource": {
+                "type": "postgres",
+                "uid": "postgres-datasource"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "red",
+                                "value": null
+                            },
+                            {
+                                "color": "orange",
+                                "value": 15
+                            },
+                            {
+                                "color": "yellow",
+                                "value": 30
+                            },
+                            {
+                                "color": "green",
+                                "value": 45
+                            }
+                        ]
+                    },
+                    "unit": "velocitykmh",
+                    "min": 0,
+                    "max": 80
+                }
+            },
+            "options": {
+                "reduceOptions": {
+                    "calcs": [
+                        "mean"
+                    ],
+                    "fields": "",
+                    "values": false
+                },
+                "showThresholdLabels": false,
+                "showThresholdMarkers": true
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "postgres",
+                        "uid": "postgres-datasource"
+                    },
+                    "format": "table",
+                    "rawQuery": true,
+                    "rawSql": "SELECT COALESCE(AVG(predicted_speed), 35) as speed FROM traffic_predictions WHERE horizon_minutes = 15 AND prediction_time > NOW() - INTERVAL '10 minutes'",
+                    "refId": "A"
+                }
+            ]
+        },
+        {
+            "type": "timeseries",
+            "title": "📈 Prédictions de Vitesse par Segment",
+            "gridPos": {
+                "h": 10,
+                "w": 12,
+                "x": 0,
+                "y": 8
+            },
+            "id": 7,
+            "datasource": {
+                "type": "postgres",
+                "uid": "postgres-datasource"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "custom": {
+                        "axisLabel": "Vitesse (km/h)",
+                        "drawStyle": "line",
+                        "fillOpacity": 10,
+                        "lineInterpolation": "smooth",
+                        "lineWidth": 2,
+                        "pointSize": 5,
+                        "showPoints": "auto",
+                        "spanNulls": false
+                    },
+                    "unit": "velocitykmh"
+                }
+            },
+            "options": {
+                "legend": {
+                    "calcs": [
+                        "mean",
+                        "lastNotNull"
+                    ],
+                    "displayMode": "table",
+                    "placement": "bottom",
+                    "showLegend": true
+                },
+                "tooltip": {
+                    "mode": "multi",
+                    "sort": "desc"
+                }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "postgres",
+                        "uid": "postgres-datasource"
+                    },
+                    "format": "time_series",
+                    "rawQuery": true,
+                    "rawSql": "SELECT target_time as time, segment_id as metric, predicted_speed as value FROM traffic_predictions WHERE prediction_time > NOW() - INTERVAL '10 minutes' AND horizon_minutes = 15 ORDER BY target_time",
+                    "refId": "A"
+                }
+            ]
+        },
+        {
+            "type": "piechart",
+            "title": "🚦 Distribution Congestion Prédite",
+            "gridPos": {
+                "h": 10,
+                "w": 6,
+                "x": 12,
+                "y": 8
+            },
+            "id": 8,
+            "datasource": {
+                "type": "postgres",
+                "uid": "postgres-datasource"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "palette-classic"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "light"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "fixedColor": "#73BF69",
+                                    "mode": "fixed"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "moderate"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "fixedColor": "#FADE2A",
+                                    "mode": "fixed"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "heavy"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "fixedColor": "#FF9830",
+                                    "mode": "fixed"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "severe"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "fixedColor": "#F2495C",
+                                    "mode": "fixed"
+                                }
+                            }
+                        ]
+                    }
+                ]
+            },
+            "options": {
+                "legend": {
+                    "displayMode": "list",
+                    "placement": "right",
+                    "showLegend": true
+                },
+                "pieType": "donut",
+                "reduceOptions": {
+                    "calcs": [
+                        "sum"
+                    ],
+                    "fields": "",
+                    "values": false
+                }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "postgres",
+                        "uid": "postgres-datasource"
+                    },
+                    "format": "table",
+                    "rawQuery": true,
+                    "rawSql": "SELECT predicted_congestion, COUNT(*) as count FROM traffic_predictions WHERE horizon_minutes = 15 AND prediction_time > NOW() - INTERVAL '10 minutes' GROUP BY predicted_congestion",
+                    "refId": "A"
+                }
+            ]
+        },
+        {
+            "type": "bargauge",
+            "title": "🎯 Confiance par Segment",
+            "gridPos": {
+                "h": 10,
+                "w": 6,
+                "x": 18,
+                "y": 8
+            },
+            "id": 9,
+            "datasource": {
+                "type": "postgres",
+                "uid": "postgres-datasource"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "thresholds": {
+                        "mode": "percentage",
+                        "steps": [
+                            {
+                                "color": "red",
+                                "value": null
+                            },
+                            {
+                                "color": "yellow",
+                                "value": 60
+                            },
+                            {
+                                "color": "green",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "unit": "percentunit",
+                    "max": 1
+                }
+            },
+            "options": {
+                "displayMode": "gradient",
+                "minVizHeight": 10,
+                "orientation": "horizontal",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ],
+                    "fields": "",
+                    "values": false
+                },
+                "showUnfilled": true
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "postgres",
+                        "uid": "postgres-datasource"
+                    },
+                    "format": "table",
+                    "rawQuery": true,
+                    "rawSql": "SELECT segment_id, AVG(confidence_score) as confidence FROM traffic_predictions WHERE prediction_time > NOW() - INTERVAL '10 minutes' GROUP BY segment_id ORDER BY segment_id",
+                    "refId": "A"
+                }
+            ]
+        },
+        {
+            "type": "table",
+            "title": "📋 Détail des Prédictions par Segment",
+            "gridPos": {
+                "h": 8,
+                "w": 16,
+                "x": 0,
+                "y": 18
+            },
+            "id": 10,
+            "datasource": {
+                "type": "postgres",
+                "uid": "postgres-datasource"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "custom": {
+                        "align": "auto",
+                        "displayMode": "auto"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "predicted_speed"
+                        },
+                        "properties": [
+                            {
+                                "id": "unit",
+                                "value": "velocitykmh"
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "confidence_score"
+                        },
+                        "properties": [
+                            {
+                                "id": "unit",
+                                "value": "percentunit"
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "predicted_congestion"
+                        },
+                        "properties": [
+                            {
+                                "id": "custom.displayMode",
+                                "value": "color-text"
+                            },
+                            {
+                                "id": "mappings",
+                                "value": [
+                                    {
+                                        "type": "value",
+                                        "options": {
+                                            "light": {
+                                                "text": "🟢 Léger",
+                                                "color": "green"
+                                            },
+                                            "moderate": {
+                                                "text": "🟡 Modéré",
+                                                "color": "yellow"
+                                            },
+                                            "heavy": {
+                                                "text": "🟠 Dense",
+                                                "color": "orange"
+                                            },
+                                            "severe": {
+                                                "text": "🔴 Sévère",
+                                                "color": "red"
+                                            }
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            "options": {
+                "showHeader": true,
+                "cellHeight": "sm"
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "postgres",
+                        "uid": "postgres-datasource"
+                    },
+                    "format": "table",
+                    "rawQuery": true,
+                    "rawSql": "SELECT DISTINCT ON (segment_id) segment_id, horizon_minutes, predicted_speed, predicted_congestion, confidence_score, target_time FROM traffic_predictions WHERE horizon_minutes = 15 AND prediction_time > NOW() - INTERVAL '10 minutes' ORDER BY segment_id, prediction_time DESC",
+                    "refId": "A"
+                }
+            ]
+        },
+        {
+            "type": "table",
+            "title": "⚠️ Anomalies Futures Prédites",
+            "gridPos": {
+                "h": 8,
+                "w": 8,
+                "x": 16,
+                "y": 18
+            },
+            "id": 11,
+            "datasource": {
+                "type": "postgres",
+                "uid": "postgres-datasource"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "custom": {
+                        "align": "auto",
+                        "displayMode": "auto"
+                    }
+                }
+            },
+            "options": {
+                "showHeader": true,
+                "cellHeight": "sm"
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "postgres",
+                        "uid": "postgres-datasource"
+                    },
+                    "format": "table",
+                    "rawQuery": true,
+                    "rawSql": "SELECT segment_id, anomaly_type, severity, probability, expected_start, description FROM predicted_anomalies WHERE expected_start > NOW() - INTERVAL '1 hour' ORDER BY severity DESC, expected_start LIMIT 10",
+                    "refId": "A"
+                }
+            ]
+        },
+        {
+            "id": 13,
+            "title": "🧠 Prédictions Long Terme (Ensemble XGBoost + LSTM)",
+            "type": "timeseries",
+            "gridPos": {
+                "h": 9,
+                "w": 24,
+                "x": 0,
+                "y": 29
+            },
+            "datasource": {
+                "type": "postgres",
+                "uid": "postgres-datasource"
+            },
+            "targets": [
+                {
+                    "rawSql": "SELECT target_time as time, segment_id as metric, predicted_speed as value FROM traffic_predictions WHERE model_type = 'ensemble_lstm_xgb' AND prediction_time > NOW() - INTERVAL '15 minutes' AND target_time > NOW() ORDER BY target_time",
+                    "format": "time_series",
+                    "rawQuery": true,
+                    "refId": "A"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "velocitykmh",
+                    "custom": {
+                        "lineWidth": 2,
+                        "fillOpacity": 10,
+                        "spanNulls": true,
+                        "drawStyle": "line",
+                        "lineInterpolation": "smooth",
+                        "lineStyle": {
+                            "dash": [
+                                5,
+                                5
+                            ]
+                        }
+                    }
+                }
+            },
+            "options": {
+                "legend": {
+                    "displayMode": "table",
+                    "placement": "right",
+                    "calcs": [
+                        "lastNotNull",
+                        "max"
+                    ]
+                },
+                "tooltip": {
+                    "mode": "multi"
+                }
+            }
+        },
+        {
+            "id": 14,
+            "title": "🔮 Prédictions de Vitesse par Segment (Horizon 1h)",
+            "type": "timeseries",
+            "gridPos": {
+                "h": 9,
+                "w": 24,
+                "x": 0,
+                "y": 38
+            },
+            "datasource": {
+                "type": "postgres",
+                "uid": "postgres-datasource"
+            },
+            "targets": [
+                {
+                    "rawSql": "SELECT target_time as time, segment_id as metric, predicted_speed as value FROM traffic_predictions WHERE model_type = 'ensemble_lstm_xgb' AND horizon_minutes = 60 AND prediction_time > NOW() - INTERVAL '15 minutes' AND target_time > NOW() ORDER BY target_time",
+                    "format": "time_series",
+                    "rawQuery": true,
+                    "refId": "A"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "velocitykmh",
+                    "custom": {
+                        "lineWidth": 2,
+                        "fillOpacity": 10,
+                        "spanNulls": true,
+                        "drawStyle": "line",
+                        "lineInterpolation": "smooth",
+                        "lineStyle": {
+                            "dash": [
+                                5,
+                                5
+                            ]
+                        }
+                    }
+                }
+            },
+            "options": {
+                "legend": {
+                    "displayMode": "table",
+                    "placement": "right",
+                    "calcs": [
+                        "lastNotNull",
+                        "max"
+                    ]
+                },
+                "tooltip": {
+                    "mode": "multi"
+                }
+            }
+        },
+        {
+            "type": "table",
+            "title": "📋 Détail des Prédictions par Segment (Horizon 1h)",
+            "gridPos": {
+                "h": 8,
+                "w": 24,
+                "x": 0,
+                "y": 47
+            },
+            "id": 15,
+            "datasource": {
+                "type": "postgres",
+                "uid": "postgres-datasource"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "custom": {
+                        "align": "auto",
+                        "displayMode": "auto"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "predicted_speed"
+                        },
+                        "properties": [
+                            {
+                                "id": "unit",
+                                "value": "velocitykmh"
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "confidence_score"
+                        },
+                        "properties": [
+                            {
+                                "id": "unit",
+                                "value": "percentunit"
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "predicted_congestion"
+                        },
+                        "properties": [
+                            {
+                                "id": "custom.displayMode",
+                                "value": "color-text"
+                            },
+                            {
+                                "id": "mappings",
+                                "value": [
+                                    {
+                                        "type": "value",
+                                        "options": {
+                                            "light": {
+                                                "text": "🟢 Léger",
+                                                "color": "green"
+                                            },
+                                            "moderate": {
+                                                "text": "🟡 Modéré",
+                                                "color": "yellow"
+                                            },
+                                            "heavy": {
+                                                "text": "🟠 Dense",
+                                                "color": "orange"
+                                            },
+                                            "severe": {
+                                                "text": "🔴 Sévère",
+                                                "color": "red"
+                                            }
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            "options": {
+                "showHeader": true,
+                "cellHeight": "sm"
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "postgres",
+                        "uid": "postgres-datasource"
+                    },
+                    "format": "table",
+                    "rawQuery": true,
+                    "rawSql": "SELECT DISTINCT ON (segment_id) segment_id, horizon_minutes, predicted_speed, predicted_congestion, confidence_score, target_time FROM traffic_predictions WHERE horizon_minutes = 60 AND prediction_time > NOW() - INTERVAL '10 minutes' ORDER BY segment_id, prediction_time DESC",
+                    "refId": "A"
+                }
+            ]
+        },
+        {
+            "type": "text",
+            "title": "🗺️ Carte Interactive",
+            "gridPos": {
+                "h": 3,
+                "w": 24,
+                "x": 0,
+                "y": 55
+            },
+            "id": 12,
+            "options": {
+                "mode": "markdown",
+                "content": "### 🌍 [➡️ Cliquez ici pour ouvrir la Carte Prédictive Interactive](http://localhost:8000/map)\n\n*La carte Leaflet affiche les segments routiers avec leurs niveaux de congestion prédits et permet de calculer des itinéraires optimisés.*"
+            }
+        }
+    ],
+    "refresh": "10s",
+    "schemaVersion": 38,
+    "style": "dark",
+    "tags": [
+        "predictions",
+        "ml",
+        "traffic",
+        "abidjan"
+    ],
+    "templating": {
+        "list": []
+    },
+    "time": {
+        "from": "now-1h",
+        "to": "now+1h"
+    },
+    "timepicker": {},
+    "timezone": "browser",
+    "title": "🔮 Prédictions de Trafic ML",
+    "uid": "predictions-dashboard",
+    "version": 2
+}

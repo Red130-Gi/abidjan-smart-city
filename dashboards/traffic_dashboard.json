@@ -1,0 +1,312 @@
+{
+    "annotations": {
+        "list": []
+    },
+    "editable": true,
+    "fiscalYearStartMonth": 0,
+    "graphTooltip": 0,
+    "id": null,
+    "links": [],
+    "liveNow": true,
+    "panels": [
+        {
+            "title": "Vitesse Moyenne par Segment",
+            "type": "timeseries",
+            "gridPos": {
+                "h": 8,
+                "w": 12,
+                "x": 0,
+                "y": 0
+            },
+            "datasource": "PostgreSQL",
+            "targets": [
+                {
+                    "rawSql": "SELECT window_start as time, segment_name, avg_speed FROM traffic_segment_stats WHERE $__timeFilter(window_start) ORDER BY window_start",
+                    "format": "time_series"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "velocitykmh",
+                    "min": 0,
+                    "max": 100
+                }
+            },
+            "options": {
+                "legend": {
+                    "displayMode": "list",
+                    "placement": "bottom"
+                },
+                "tooltip": {
+                    "mode": "multi"
+                }
+            }
+        },
+        {
+            "title": "Niveau de Congestion",
+            "type": "gauge",
+            "gridPos": {
+                "h": 8,
+                "w": 6,
+                "x": 12,
+                "y": 0
+            },
+            "datasource": "PostgreSQL",
+            "targets": [
+                {
+                    "rawSql": "SELECT AVG(CASE congestion_level WHEN 'severe' THEN 4 WHEN 'heavy' THEN 3 WHEN 'moderate' THEN 2 ELSE 1 END) as value FROM traffic_segment_stats WHERE window_start > NOW() - INTERVAL '5 minutes'",
+                    "format": "table"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "yellow",
+                                "value": 2
+                            },
+                            {
+                                "color": "orange",
+                                "value": 3
+                            },
+                            {
+                                "color": "red",
+                                "value": 3.5
+                            }
+                        ]
+                    },
+                    "min": 1,
+                    "max": 4
+                }
+            }
+        },
+        {
+            "title": "Véhicules en Temps Réel",
+            "type": "stat",
+            "gridPos": {
+                "h": 4,
+                "w": 6,
+                "x": 18,
+                "y": 0
+            },
+            "datasource": "PostgreSQL",
+            "targets": [
+                {
+                    "rawSql": "SELECT SUM(vehicle_count) as value FROM traffic_segment_stats WHERE window_start > NOW() - INTERVAL '1 minute'",
+                    "format": "table"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "short",
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "yellow",
+                                "value": 500
+                            },
+                            {
+                                "color": "red",
+                                "value": 1000
+                            }
+                        ]
+                    }
+                }
+            }
+        },
+        {
+            "title": "Anomalies Actives",
+            "type": "stat",
+            "gridPos": {
+                "h": 4,
+                "w": 6,
+                "x": 18,
+                "y": 4
+            },
+            "datasource": "PostgreSQL",
+            "targets": [
+                {
+                    "rawSql": "SELECT COUNT(*) as value FROM traffic_anomalies WHERE is_resolved = FALSE AND detected_at > NOW() - INTERVAL '1 hour'",
+                    "format": "table"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "yellow",
+                                "value": 2
+                            },
+                            {
+                                "color": "red",
+                                "value": 5
+                            }
+                        ]
+                    }
+                }
+            }
+        },
+        {
+            "title": "Carte du Trafic - Abidjan",
+            "type": "geomap",
+            "gridPos": {
+                "h": 12,
+                "w": 12,
+                "x": 0,
+                "y": 8
+            },
+            "datasource": "PostgreSQL",
+            "targets": [
+                {
+                    "rawSql": "SELECT segment_name, ST_Y(start_point) as latitude, ST_X(start_point) as longitude, (SELECT avg_speed FROM traffic_segment_stats ts WHERE ts.segment_id = rs.segment_id ORDER BY window_start DESC LIMIT 1) as metric FROM road_segments rs",
+                    "format": "table"
+                }
+            ],
+            "options": {
+                "view": {
+                    "id": "coords",
+                    "lat": 5.35,
+                    "lon": -4.0,
+                    "zoom": 12
+                },
+                "layers": [
+                    {
+                        "type": "markers",
+                        "config": {
+                            "style": {
+                                "size": {
+                                    "field": "metric",
+                                    "min": 5,
+                                    "max": 20
+                                },
+                                "color": {
+                                    "field": "metric",
+                                    "fixed": "green"
+                                }
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "title": "Distribution des Types de Véhicules",
+            "type": "piechart",
+            "gridPos": {
+                "h": 6,
+                "w": 6,
+                "x": 12,
+                "y": 8
+            },
+            "datasource": "PostgreSQL",
+            "targets": [
+                {
+                    "rawSql": "SELECT 'Gbakas' as name, SUM(gbaka_count) as value FROM traffic_segment_stats WHERE window_start > NOW() - INTERVAL '5 minutes' UNION ALL SELECT 'Bus', SUM(bus_count) FROM traffic_segment_stats WHERE window_start > NOW() - INTERVAL '5 minutes' UNION ALL SELECT 'Taxis', SUM(taxi_count) FROM traffic_segment_stats WHERE window_start > NOW() - INTERVAL '5 minutes'",
+                    "format": "table"
+                }
+            ]
+        },
+        {
+            "title": "Conditions Météo",
+            "type": "table",
+            "gridPos": {
+                "h": 6,
+                "w": 6,
+                "x": 18,
+                "y": 8
+            },
+            "datasource": "PostgreSQL",
+            "targets": [
+                {
+                    "rawSql": "SELECT station_name as \"Station\", temperature as \"Temp (°C)\", humidity as \"Humidité (%)\", condition as \"Condition\" FROM weather_data wd INNER JOIN weather_stations ws ON wd.station_id = ws.station_id WHERE recorded_at > NOW() - INTERVAL '10 minutes' ORDER BY recorded_at DESC LIMIT 5",
+                    "format": "table"
+                }
+            ]
+        },
+        {
+            "title": "Incidents Actifs",
+            "type": "table",
+            "gridPos": {
+                "h": 6,
+                "w": 12,
+                "x": 12,
+                "y": 14
+            },
+            "datasource": "PostgreSQL",
+            "targets": [
+                {
+                    "rawSql": "SELECT incident_type as \"Type\", location_name as \"Lieu\", severity as \"Sévérité\", description as \"Description\", created_at as \"Heure\" FROM incidents WHERE is_resolved = FALSE ORDER BY created_at DESC LIMIT 10",
+                    "format": "table"
+                }
+            ]
+        },
+        {
+            "title": "Historique Vitesse Moyenne (24h)",
+            "type": "timeseries",
+            "gridPos": {
+                "h": 8,
+                "w": 24,
+                "x": 0,
+                "y": 20
+            },
+            "datasource": "PostgreSQL",
+            "targets": [
+                {
+                    "rawSql": "SELECT window_start as time, AVG(avg_speed) as \"Vitesse Moyenne Globale\" FROM traffic_segment_stats WHERE window_start > NOW() - INTERVAL '24 hours' GROUP BY window_start ORDER BY window_start",
+                    "format": "time_series"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "velocitykmh",
+                    "custom": {
+                        "lineWidth": 2,
+                        "fillOpacity": 10
+                    }
+                }
+            }
+        }
+    ],
+    "refresh": "5s",
+    "schemaVersion": 38,
+    "style": "dark",
+    "tags": [
+        "traffic",
+        "abidjan",
+        "smart-city"
+    ],
+    "templating": {
+        "list": []
+    },
+    "time": {
+        "from": "now-1h",
+        "to": "now"
+    },
+    "timepicker": {},
+    "timezone": "Africa/Abidjan",
+    "title": "Abidjan Traffic Dashboard",
+    "uid": "abidjan-traffic-main",
+    "version": 1,
+    "weekStart": "monday"
+}
