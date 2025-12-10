@@ -77,6 +77,52 @@
     - [x] Add 1h horizon prediction panel to dashboard
     - [x] Add 1h horizon details table to dashboard
 
-## Documentation & Governance
-- [x] Create Data Governance & Extension Proposal
-- [x] Create Full Project Documentation (Process, Design, Realization)
+## ML Pipeline Overhaul
+- [x] **Data Preprocessing**
+    - [x] Implement data cleaning (remove negatives, interpolate)
+    - [x] Create temporal features (hour, dayofweek, peak, etc.)
+    - [x] Define correct congestion label (speed < 15)
+    - [x] Implement normalization (Scalers) and saving
+- [x] **Classical Models Optimization**
+    - [x] Implement time-series split (no shuffle)
+    - [x] Implement GridSearchCV/RandomizedSearchCV for XGBoost/RF
+    - [x] Optimize for R² > 0.50 (Speed) and Accuracy > 0.80 (Congestion)
+- [x] **LSTM per Segment**
+    - [x] Implement sequence creation (window=20)
+    - [x] Define specific LSTM architecture (64->32->16->1)
+    - [x] Add callbacks (EarlyStopping, ReduceLROnPlateau)
+    - [x] Implement per-segment training and saving
+- [x] **Ensemble Model**
+    - [x] Combine LSTM predictions + Classical Features
+    - [x] Train final meta-model
+    - [x] Target R² > 0.60
+- [x] **Infrastructure & Logging**
+    - [x] Reorganize `src/ml/models/` structure
+    - [x] Implement detailed logging (scores, params, warnings)
+
+## 🗺️ OSRM Integration (Realistic Routing)
+- [x] **Frontend Integration**
+    - [x] Add `leaflet-routing-machine` to `future_map.html`
+    - [x] Configure OSRM service (Public API for demo)
+    - [x] Update map drawing to snap to roads
+- [ ] **Backend Geometry**
+    - [ ] Update `route_optimizer.py` to fetch/cache real geometry from OSRM
+    - [ ] Replace straight lines with Polyline decoding
+
+## 🐘 Big Data Scaling (Cassandra Migration)
+- [x] **Infrastructure**
+    - [x] Add Cassandra to `docker-compose.yml`
+    - [x] Add `cassandra-driver` to `requirements.txt`
+    - [x] Create `src/db/cassandra_db.py` (Connection & Schema)
+- [x] **Processing Layer**
+    - [x] Update `src/spark/traffic_streaming.py` to write to Cassandra
+- [x] **Data Generation**
+    - [x] Scale `traffic_producer.py` to 5000 vehicles
+
+## 🌦️ ML Improvement: Weather Integration
+- [x] **Data Pipeline**
+    - [x] Verify/Enable weather data storage (Spark/Postgres)
+- [x] **Feature Engineering**
+    - [x] Update `feature_engineering.py` to include rain/temperature
+- [x] **Training**
+    - [x] Retrain model with weather features

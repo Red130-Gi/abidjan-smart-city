@@ -1,20 +1,66 @@
 """
 Route Optimization Engine using A* Algorithm
 Calculates optimal routes based on real-time traffic and predictions.
+Now with OSRM integration for real road geometry.
 """
 import heapq
 import json
 import math
 import uuid
+import requests
 from datetime import datetime
 from typing import Dict, List, Tuple, Optional
 from dataclasses import dataclass
+from functools import lru_cache
 
 import psycopg2
 from psycopg2.extras import execute_values
 import sys
 sys.path.append('.')
 from config.settings import postgres_config
+
+
+def decode_polyline(polyline_str: str, precision: int = 5) -> List[List[float]]:
+    """
+    Decode a Google/OSRM encoded polyline string into a list of coordinates.
+    Returns: List of [longitude, latitude] pairs (GeoJSON order).
+    """
+    coordinates = []
+    index = 0
+    lat = 0
+    lng = 0
+    
+    while index < len(polyline_str):
+        # Decode latitude
+        shift = 0
+        result = 0
+        while True:
+            b = ord(polyline_str[index]) - 63
+            index += 1
+            result |= (b & 0x1f) << shift
+            shift += 5
+            if b < 0x20:
+                break
+        dlat = ~(result >> 1) if result & 1 else result >> 1
+        lat += dlat
+        
+        # Decode longitude
+        shift = 0
+        result = 0
+        while True:
+            b = ord(polyline_str[index]) - 63
+            index += 1
+            result |= (b & 0x1f) << shift
+            shift += 5
+            if b < 0x20:
+                break
+        dlng = ~(result >> 1) if result & 1 else result >> 1
+        lng += dlng
+        
+        # Convert to actual coordinates (GeoJSON format: [lng, lat])
+        coordinates.append([lng / (10 ** precision), lat / (10 ** precision)])
+    
+    return coordinates
 
 @dataclass
 class Node:
@@ -76,8 +122,51 @@ class RouteOptimizer:
         'severe': 2.5
     }
     
+    # OSRM API for real road geometry
+    OSRM_URL = "http://router.project-osrm.org/route/v1/driving"
+    
     def __init__(self):
         self.graph = self._build_graph()
+        self._geometry_cache = {}  # Cache for OSRM geometries
+        
+    def _fetch_osrm_geometry(self, origin_coords: Tuple[float, float], 
+                              dest_coords: Tuple[float, float]) -> Optional[List[List[float]]]:
+        """
+        Fetch real road geometry from OSRM API.
+        
+        Args:
+            origin_coords: (longitude, latitude) of origin
+            dest_coords: (longitude, latitude) of destination
+            
+        Returns:
+            List of [lng, lat] coordinates forming the route, or None on failure.
+        """
+        cache_key = f"{origin_coords[0]:.4f},{origin_coords[1]:.4f}_{dest_coords[0]:.4f},{dest_coords[1]:.4f}"
+        
+        if cache_key in self._geometry_cache:
+            return self._geometry_cache[cache_key]
+        
+        try:
+            url = f"{self.OSRM_URL}/{origin_coords[0]},{origin_coords[1]};{dest_coords[0]},{dest_coords[1]}"
+            params = {
+                'overview': 'full',       # Get full geometry
+                'geometries': 'polyline', # Encoded polyline format
+                'steps': 'false'
+            }
+            
+            response = requests.get(url, params=params, timeout=5)
+            
+            if response.status_code == 200:
+                data = response.json()
+                if data.get('code') == 'Ok' and data.get('routes'):
+                    polyline = data['routes'][0]['geometry']
+                    coordinates = decode_polyline(polyline)
+                    self._geometry_cache[cache_key] = coordinates
+                    return coordinates
+        except Exception as e:
+            print(f"⚠️ OSRM fetch failed: {e}")
+        
+        return None
         
     def _get_db_connection(self):
         return psycopg2.connect(
@@ -253,7 +342,7 @@ class RouteOptimizer:
         return None  # No path found
     
     def _build_route_result(self, path: List[str], use_predictions: bool) -> Dict:
-        """Build detailed route result from path."""
+        """Build detailed route result from path, with OSRM real geometry."""
         segments = []
         total_distance = 0
         total_duration = 0
@@ -311,6 +400,17 @@ class RouteOptimizer:
         fuel_consumption = total_distance * 0.08  # 8L/100km average
         co2_emissions = fuel_consumption * 2.31  # 2.31 kg CO2 per liter
         
+        # Fetch real road geometry from OSRM (origin to destination)
+        origin_node = self.ROAD_NETWORK['nodes'][path[0]]
+        dest_node = self.ROAD_NETWORK['nodes'][path[-1]]
+        osrm_geometry = self._fetch_osrm_geometry(
+            (origin_node.longitude, origin_node.latitude),
+            (dest_node.longitude, dest_node.latitude)
+        )
+        
+        # Use OSRM geometry if available, otherwise fallback to waypoints
+        route_coordinates = osrm_geometry if osrm_geometry else waypoints
+        
         return {
             'path': path,
             'segments': segments,
@@ -324,8 +424,9 @@ class RouteOptimizer:
             'waypoints': waypoints,
             'route_geometry': {
                 'type': 'LineString',
-                'coordinates': waypoints
+                'coordinates': route_coordinates
             },
+            'geometry_source': 'osrm' if osrm_geometry else 'straight_line',
             'used_predictions': use_predictions
         }
     

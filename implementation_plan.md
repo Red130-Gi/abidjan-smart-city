@@ -139,24 +139,20 @@ Génère des prédictions réalistes pour démonstration
 - Combinaison pondérée : `0.7 * XGBoost + 0.3 * LSTM` (court terme)
 - Combinaison pondérée : `0.3 * XGBoost + 0.7 * LSTM` (long terme)
 
-#### [MODIFY] [traffic_dashboard.json](file:///C:/Users/HP/.gemini/antigravity/scratch/abidjan_smart_city/grafana/dashboards/traffic_dashboard.json)
-- Removed "Prédictions Long Terme (Ensemble)" panel (migrated to Predictions Dashboard)
+#### [NEW] [ensemble_model.py](file:///C:/Users/HP/.gemini/antigravity/scratch/abidjan_smart_city/src/ml/ensemble_model.py)
+- Combinaison pondérée : `0.7 * XGBoost + 0.3 * LSTM` (court terme)
+- Combinaison pondérée : `0.3 * XGBoost + 0.7 * LSTM` (long terme)
 
-#### [MODIFY] [predictions_dashboard.json](file:///C:/Users/HP/.gemini/antigravity/scratch/abidjan_smart_city/grafana/dashboards/predictions_dashboard.json)
-- Added "Prédictions Long Terme (Ensemble XGBoost + LSTM)" panel
-- Added "Prédictions de Vitesse par Segment (Horizon 1h)" panel
-- Added "Détail des Prédictions par Segment (Horizon 1h)" table
+### 9️⃣ Intégration OSRM (Routing Réaliste)
 
-#### [MODIFY] [prediction_service.py](file:///C:/Users/HP/.gemini/antigravity/scratch/abidjan_smart_city/src/ml/prediction_service.py)
-- Updated to use `TrafficEnsemble` as the primary prediction model
+#### [MODIFY] [future_map.html](file:///C:/Users/HP/.gemini/antigravity/scratch/abidjan_smart_city/static/future_map.html)
+- Remplacer le tracé "ligne droite" par `Leaflet Routing Machine`.
+- Utiliser l'API OSRM publique (`router.project-osrm.org`) pour récupérer la géométrie exacte.
+- Maintenir les waypoints définis par notre algorithme ML (pour forcer le passage par les segments optimisés) mais avec un tracé réaliste entre eux.
 
 #### [MODIFY] [route_optimizer.py](file:///C:/Users/HP/.gemini/antigravity/scratch/abidjan_smart_city/src/routing/route_optimizer.py)
-- Updated to prioritize `ensemble_lstm_xgb` predictions for route calculation
-
----
-
-## Verification Plan
-
+- Enrichir les objets `Edge` avec la géométrie réelle (Encoded Polyline).
+- Permettre à l'API de renvoyer des coordonnées précises au lieu de simples points de début/fin.
 ### Tests Automatisés
 ```bash
 # Vérifier les tables créées
@@ -187,3 +183,35 @@ curl http://localhost:3000/api/dashboards/uid/predictions-dashboard
 6. ✅ Créer dashboard Grafana Itinéraires
 7. ✅ Implémenter simulateur de données
 8. ✅ Tests et validation
+
+### 🔟 Big Data Scaling (Cassandra)
+
+#### [MODIFY] [docker-compose.yml](file:///C:/Users/HP/.gemini/antigravity/scratch/abidjan_smart_city/docker-compose.yml)
+- Ajouter le service `cassandra` (image: `cassandra:4.1`).
+- Exposer le port `9042`.
+
+#### [NEW] [src/db/cassandra_db.py](file:///C:/Users/HP/.gemini/antigravity/scratch/abidjan_smart_city/src/db/cassandra_db.py)
+- Classe `CassandraConnector`.
+- Initialisation du Keyspace `smart_city`.
+- Table `traffic_data` partitionnée par `segment_id` et clusterisée par `timestamp` (pour des lectures rapides par segment).
+
+#### [MODIFY] [src/spark/traffic_streaming.py](file:///C:/Users/HP/.gemini/antigravity/scratch/abidjan_smart_city/src/spark/traffic_streaming.py)
+- Dans `process_batch`, ajouter l'écriture vers Cassandra.
+- Utiliser `cassandra-driver` pour l'insertion par batch (`BatchStatement`).
+
+#### [MODIFY] [src/producers/traffic_producer.py](file:///C:/Users/HP/.gemini/antigravity/scratch/abidjan_smart_city/src/producers/traffic_producer.py)
+- Augmenter `num_vehicles` à 5000.
+
+### 1️⃣1️⃣ ML Improvement: Weather Integration
+
+#### [MODIFY] [src/spark/traffic_streaming.py](file:///C:/Users/HP/.gemini/antigravity/scratch/abidjan_smart_city/src/spark/traffic_streaming.py)
+- Ajouter la consommation du topic `weather_data`.
+- Stocker les données météo dans PostgreSQL (`weather_data`).
+
+#### [MODIFY] [src/ml/prediction_service.py](file:///C:/Users/HP/.gemini/antigravity/scratch/abidjan_smart_city/src/ml/prediction_service.py)
+- Joindre les données de trafic avec les données météo (sur `timestamp` arrondi).
+
+#### [MODIFY] [src/ml/feature_engineering.py](file:///C:/Users/HP/.gemini/antigravity/scratch/abidjan_smart_city/src/ml/feature_engineering.py)
+- Ajouter `precipitation` et `temperature` comme features.
+
+
