@@ -398,37 +398,89 @@
             document.getElementById('recommendation').textContent = data.comparison.recommendation;
         }
 
-        function drawRoute(data) {
+        async function drawRoute(data) {
             // Clear previous layers
             currentLayers.forEach(layer => map.removeLayer(layer));
             currentLayers = [];
 
-            // Draw Alternative Route (Grey)
-            if (data.alternative_route && data.alternative_route.waypoints) {
-                const altLine = L.polyline(data.alternative_route.waypoints.map(p => [p[1], p[0]]), {
-                    color: '#6b7280',
-                    weight: 4,
-                    opacity: 0.6,
-                    dashArray: '10, 10'
-                }).addTo(map);
-                currentLayers.push(altLine);
+            // Helper to fetch OSRM geometry
+            async function getOSRMGeometry(waypoints) {
+                // OSRM expects lon,lat;lon,lat
+                // waypoints are [lon, lat] from backend
+                const coords = waypoints.map(p => `${p[0]},${p[1]}`).join(';');
+                const url = `https://router.project-osrm.org/route/v1/driving/${coords}?overview=full&geometries=geojson`;
+
+                try {
+                    const response = await fetch(url);
+                    const json = await response.json();
+                    if (json.code === 'Ok' && json.routes.length > 0) {
+                        return json.routes[0].geometry;
+                    }
+                } catch (e) {
+                    console.error("OSRM Fetch Error:", e);
+                }
+                return null;
             }
 
-            // Draw Recommended Route (Green/Yellow/Red based on congestion)
-            const waypoints = data.recommended_route.waypoints.map(p => [p[1], p[0]]);
+            // 1. Draw Alternative Route (Grey)
+            if (data.alternative_route && data.alternative_route.waypoints) {
+                const geometry = await getOSRMGeometry(data.alternative_route.waypoints);
+
+                if (geometry) {
+                    const altLayer = L.geoJSON(geometry, {
+                        style: {
+                            color: '#6b7280',
+                            weight: 4,
+                            opacity: 0.6,
+                            dashArray: '10, 10'
+                        }
+                    }).addTo(map);
+                    currentLayers.push(altLayer);
+                } else {
+                    // Fallback to straight line
+                    const altLine = L.polyline(data.alternative_route.waypoints.map(p => [p[1], p[0]]), {
+                        color: '#6b7280',
+                        weight: 4,
+                        opacity: 0.6,
+                        dashArray: '10, 10'
+                    }).addTo(map);
+                    currentLayers.push(altLine);
+                }
+            }
+
+            // 2. Draw Recommended Route
+            const waypoints = data.recommended_route.waypoints;
+            const geometry = await getOSRMGeometry(waypoints);
+
             const congestion = data.recommended_route.congestion_score;
             let color = '#10b981'; // Green
             if (congestion > 2.5) color = '#f59e0b'; // Yellow
             if (congestion > 3.5) color = '#ef4444'; // Red
 
-            const mainLine = L.polyline(waypoints, {
-                color: color,
-                weight: 6,
-                opacity: 0.9
-            }).addTo(map);
-            currentLayers.push(mainLine);
+            let mainLayer;
+            if (geometry) {
+                mainLayer = L.geoJSON(geometry, {
+                    style: {
+                        color: color,
+                        weight: 6,
+                        opacity: 0.9
+                    }
+                }).addTo(map);
+            } else {
+                // Fallback
+                mainLayer = L.polyline(waypoints.map(p => [p[1], p[0]]), {
+                    color: color,
+                    weight: 6,
+                    opacity: 0.9
+                }).addTo(map);
+            }
+            currentLayers.push(mainLayer);
 
-            // Add Markers
+            // 3. Add Markers
+            // waypoints are [lon, lat], Leaflet needs [lat, lon]
+            const startPoint = [waypoints[0][1], waypoints[0][0]];
+            const endPoint = [waypoints[waypoints.length - 1][1], waypoints[waypoints.length - 1][0]];
+
             const startIcon = L.divIcon({
                 html: '<i class="fas fa-map-marker-alt fa-2x" style="color: #3b82f6;"></i>',
                 className: 'custom-div-icon',
@@ -443,16 +495,15 @@
                 iconAnchor: [5, 30]
             });
 
-            const startMarker = L.marker(waypoints[0], { icon: startIcon }).addTo(map)
+            const startMarker = L.marker(startPoint, { icon: startIcon }).addTo(map)
                 .bindPopup(`<b>Départ:</b> ${data.origin.name}<br>Heure: ${data.timing.departure_hour}`);
 
-            const endMarker = L.marker(waypoints[waypoints.length - 1], { icon: endIcon }).addTo(map)
+            const endMarker = L.marker(endPoint, { icon: endIcon }).addTo(map)
                 .bindPopup(`<b>Arrivée:</b> ${data.destination.name}<br>Durée: ${data.recommended_route.estimated_duration_minutes} min`);
 
             currentLayers.push(startMarker, endMarker);
 
-            // Fit bounds
-            map.fitBounds(mainLine.getBounds(), { padding: [50, 50] });
+            // Removed map.fitBounds to keep the map fixed on Abidjan as requested
         }
     </script>
 

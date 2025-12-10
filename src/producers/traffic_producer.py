@@ -198,7 +198,7 @@ class TrafficDataProducer:
 
 def main():
     """Main entry point."""
-    producer = TrafficDataProducer(num_vehicles=200)
+    producer = TrafficDataProducer(num_vehicles=5000)
     producer.produce(interval_seconds=1.0)
 
 if __name__ == "__main__":

@@ -120,27 +120,6 @@ CREATE TABLE IF NOT EXISTS weather_data (
     PRIMARY KEY (id, recorded_at)
 ) PARTITION BY RANGE (recorded_at);
 
-CREATE TABLE IF NOT EXISTS weather_data_default PARTITION OF weather_data DEFAULT;
-
--- ============================================
--- PREDICTION TABLES
--- ============================================
-
--- Traffic predictions
-CREATE TABLE IF NOT EXISTS traffic_predictions (
-    id BIGSERIAL PRIMARY KEY,
-    segment_id VARCHAR(20) REFERENCES road_segments(segment_id),
-    prediction_time TIMESTAMP NOT NULL,
-    target_time TIMESTAMP NOT NULL,
-    predicted_speed DECIMAL(6,2),
-    predicted_congestion_level VARCHAR(20),
-    confidence_score DECIMAL(4,3),
-    model_version VARCHAR(20),
-    features_used JSONB,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- ============================================
 -- USER MANAGEMENT TABLES
 -- ============================================
 

@@ -207,7 +207,7 @@ class FutureRoutePlanner:
         
         # Confidence decreases with time horizon
         hours_ahead = (target_time - datetime.now()).total_seconds() / 3600
-        confidence = max(0.5, 0.95 - (hours_ahead * 0.02))
+        confidence = max(0.5, 0.95 - (hours_ahead * 0.002))
         
         return FutureTrafficPrediction(
             segment_id=segment_id,

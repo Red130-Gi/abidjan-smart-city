@@ -15,14 +15,14 @@ sys.path.append('.')
 sys.path.append('/app')
 from config.settings import postgres_config
 
-# Try to import Ensemble ML predictor
+# Try to import Prediction Service
 try:
-    from src.ml.ensemble_model import ensemble_predictor
+    from src.ml.prediction_service import prediction_service
     USE_REAL_ML = True
-    print("✅ Ensemble ML Predictor (XGBoost + LSTM) imported successfully")
+    print("✅ Prediction Service imported successfully")
 except ImportError as e:
     USE_REAL_ML = False
-    print(f"⚠️ Could not import Ensemble Predictor: {e}")
+    print(f"⚠️ Could not import Prediction Service: {e}")
     print("   Falling back to simulated predictions")
 
 # Road segments
@@ -58,61 +58,26 @@ def get_congestion_level(speed):
     else:
         return 'light'
 
-def generate_real_predictions(predictor):
-    """Generate predictions using Ensemble ML models."""
+def generate_real_predictions(service):
+    """Generate predictions using Prediction Service."""
     now = datetime.now()
     
-    # Train if needed (Ensemble handles its own training logic)
-    # predictor is now the ensemble_predictor instance
-    try:
-        predictor.train_all()
-    except Exception as e:
-        print(f"Training warning: {e}")
+    # Train if needed is handled by service or external trigger
+    # But for simulation loop, we might want to trigger training occasionally
+    # This is handled in main loop
     
     predictions = []
-    for segment_id in SEGMENTS:
-        for horizon in HORIZONS:
-            pred = predictor.predict(segment_id, horizon)
-            predictions.append(pred)
-            
-    # Save to database (using helper from real_predictor inside ensemble if needed, or manual)
-    # Since ensemble returns dicts, we can reuse the save logic if we access the inner predictor
-    # or just implement saving here. Let's implement saving here to be safe.
-    
-    conn = get_db_connection()
-    data = [
-        (
-            p['segment_id'],
-            p['prediction_time'],
-            p['target_time'],
-            p['horizon_minutes'],
-            p['predicted_speed'],
-            p['predicted_congestion'],
-            p['confidence_score'],
-            p['model_type'],
-            json.dumps(p.get('details', {}))
-        )
-        for p in predictions
-    ]
-    
     try:
-        with conn.cursor() as cur:
-            execute_values(cur, """
-                INSERT INTO traffic_predictions 
-                (segment_id, prediction_time, target_time, horizon_minutes,
-                 predicted_speed, predicted_congestion, confidence_score, 
-                 model_type, features_used)
-                VALUES %s
-            """, data)
-        conn.commit()
+        for horizon in HORIZONS:
+            # predict_all handles fetching data and features for all segments
+            preds = service.predict_all(horizon)
+            predictions.extend(preds)
+            
+        print(f"[{now.strftime('%H:%M:%S')}] 🔮 Generated {len(predictions)} Real predictions")
+        return predictions
     except Exception as e:
-        print(f"Error saving predictions: {e}")
-    finally:
-        conn.close()
-    
-    print(f"[{now.strftime('%H:%M:%S')}] 🔮 Generated {len(predictions)} Ensemble predictions (XGB+LSTM)")
-    
-    return predictions
+        print(f"⚠️ Prediction error: {e}")
+        return []
 
 def generate_simulated_predictions(conn):
     """Fallback: Generate simulated predictions (no ML)."""
@@ -327,15 +292,15 @@ def main():
     print(f"Connecting to PostgreSQL at {postgres_config.host}:{postgres_config.port}")
     print(f"Using Real ML: {USE_REAL_ML}")
     
-    # Initialize predictor if available
-    predictor = None
+    # Initialize service if available
+    service = None
     if USE_REAL_ML:
         try:
-            predictor = ensemble_predictor
-            print("✅ Ensemble Predictor initialized")
+            service = prediction_service
+            print("✅ Prediction Service initialized")
         except Exception as e:
-            print(f"⚠️ Could not initialize predictor: {e}")
-            predictor = None
+            print(f"⚠️ Could not initialize service: {e}")
+            service = None
     
     try:
         conn = get_db_connection()
@@ -348,13 +313,16 @@ def main():
             iteration += 1
             
             # Generate predictions
-            if predictor and USE_REAL_ML:
-                # Force retrain periodically
-                if iteration % retrain_interval == 0:
+            if service and USE_REAL_ML:
+                # Force retrain periodically or on first run
+                if iteration == 1 or iteration % retrain_interval == 0:
                     print(f"[{datetime.now().strftime('%H:%M:%S')}] 🔄 Retraining models...")
-                    predictor.train(force=True)
+                    try:
+                        service.train_full_pipeline()
+                    except Exception as e:
+                        print(f"⚠️ Training failed: {e}")
                 
-                generate_real_predictions(predictor)
+                generate_real_predictions(service)
             else:
                 generate_simulated_predictions(conn)
             

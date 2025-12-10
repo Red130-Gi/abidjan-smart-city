@@ -1,12 +1,17 @@
-"""
-ML Module for Traffic Predictions
-"""
+from .feature_engineering import TrafficFeatureEngineer
+from .classical_models import TrafficClassicalModels
+from .lstm_model import TrafficLSTM
+from .ensemble_model import TrafficEnsemble, ensemble_predictor
 from .prediction_service import TrafficPredictionService, prediction_service
+from .real_predictor import RealMLPredictor
 
-try:
-    from .real_predictor import RealMLPredictor
-    from .ensemble_model import TrafficEnsemble, ensemble_predictor
-except ImportError:
-    pass
-
-__all__ = ['TrafficPredictionService', 'prediction_service', 'RealMLPredictor', 'TrafficEnsemble', 'ensemble_predictor']
+__all__ = [
+    'TrafficFeatureEngineer',
+    'TrafficClassicalModels',
+    'TrafficLSTM',
+    'TrafficEnsemble',
+    'ensemble_predictor',
+    'TrafficPredictionService',
+    'prediction_service',
+    'RealMLPredictor'
+]

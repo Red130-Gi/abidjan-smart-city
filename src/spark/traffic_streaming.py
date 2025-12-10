@@ -55,8 +55,7 @@ def create_spark_session():
         .master("spark://spark-master:7077")
         .config("spark.jars.packages", 
                 "org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0,"
-                "org.postgresql:postgresql:42.6.0,"
-                "org.mongodb.spark:mongo-spark-connector_2.12:10.2.0")
+                "org.postgresql:postgresql:42.6.0")
         .config("spark.sql.streaming.checkpointLocation", "/tmp/checkpoints")
         .config("spark.streaming.backpressure.enabled", "true")
         .config("spark.streaming.kafka.maxRatePerPartition", "1000")
@@ -174,13 +173,60 @@ def write_to_postgres(df, table_name, mode="append"):
         .option("checkpointLocation", f"/tmp/checkpoints/{table_name}")
         .start())
 
-def write_to_console(df, query_name):
-    """Write streaming data to console (for debugging)."""
+def write_to_cassandra(df, keyspace, table):
+    """Write streaming data to Cassandra using the DataStax driver."""
+    def process_batch(batch_df, batch_id):
+        if batch_df.isEmpty():
+            return
+            
+        # Collect data to driver (for this simulation scale it's fine, 
+        # for real production we'd use the Spark-Cassandra connector)
+        rows = batch_df.collect()
+        
+        from cassandra.cluster import Cluster
+        from cassandra.query import BatchStatement
+        
+        try:
+            cluster = Cluster(['cassandra'], port=9042)
+            session = cluster.connect(keyspace)
+            
+            insert_stmt = session.prepare(f"""
+                INSERT INTO {table} (segment_id, timestamp, vehicle_id, speed, latitude, longitude, vehicle_type)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            """)
+            
+            batch = BatchStatement()
+            count = 0
+            
+            for row in rows:
+                batch.add(insert_stmt, (
+                    row.segment_id, 
+                    row.event_time, 
+                    row.vehicle_id, 
+                    row.speed,
+                    row.latitude,
+                    row.longitude,
+                    row.vehicle_type
+                ))
+                count += 1
+                
+                # Execute batch every 100 rows
+                if count >= 100:
+                    session.execute(batch)
+                    batch = BatchStatement()
+                    count = 0
+            
+            if count > 0:
+                session.execute(batch)
+                
+            cluster.shutdown()
+        except Exception as e:
+            print(f"Error writing to Cassandra: {e}")
+
     return (df.writeStream
-        .outputMode("update")
-        .format("console")
-        .option("truncate", False)
-        .queryName(query_name)
+        .foreachBatch(process_batch)
+        .outputMode("append")
+        .option("checkpointLocation", f"/tmp/checkpoints/cassandra_{table}")
         .start())
 
 def main():
@@ -198,11 +244,20 @@ def main():
     vehicle_stats = compute_vehicle_type_stats(traffic_stream)
     anomalies = detect_anomalies(traffic_stream)
     
-    # Write to PostgreSQL
+    # Write to PostgreSQL (Aggregated Data)
     queries = [
         write_to_postgres(segment_stats, "traffic_segment_stats"),
         write_to_postgres(anomalies, "traffic_anomalies"),
+        # Write RAW data to Cassandra (Big Data Storage)
+        write_to_cassandra(traffic_stream, "smart_city", "traffic_data")
     ]
+
+    # Process Weather Data
+    weather_stream = read_kafka_stream(spark, "weather_data", WEATHER_SCHEMA)
+    # Rename timestamp to recorded_at to match Postgres schema
+    weather_stream = weather_stream.withColumnRenamed("timestamp", "recorded_at")
+    # We can write raw weather data to Postgres for now (low volume)
+    queries.append(write_to_postgres(weather_stream, "weather_data"))
     
     print("Streaming queries started. Waiting for termination...")
     

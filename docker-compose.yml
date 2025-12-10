@@ -113,6 +113,25 @@ services:
       timeout: 5s
       retries: 5
 
+  # --- NoSQL Storage (Cassandra) ---
+  cassandra:
+    image: cassandra:4.1
+    ports:
+      - "9042:9042"
+    environment:
+      - CASSANDRA_CLUSTER_NAME=AbidjanSmartCity
+      - CASSANDRA_DC=datacenter1
+      - CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
+    volumes:
+      - cassandra_data:/var/lib/cassandra
+    networks:
+      - smart-city-net
+    healthcheck:
+      test: [ "CMD-SHELL", "[ $$(nodetool statusgossip) = running ] || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
   # --- Visualization ---
   grafana:
     image: grafana/grafana:9.5.2
@@ -256,3 +275,4 @@ networks:
 volumes:
   postgres_data:
   mongo_data:
+  cassandra_data:
