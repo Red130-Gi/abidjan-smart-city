@@ -29,6 +29,7 @@ Ceci démarrera :
 - Kafka & Zookeeper
 - Spark Master & Worker
 - PostgreSQL (Port 5432)
+- **Cassandra** (Port 9042 - Big Data)
 - MongoDB (Port 27017)
 - Redis (Port 6379)
 - Grafana (Port 3000)
@@ -36,7 +37,11 @@ Ceci démarrera :
 ## 🛠 Stack Technique
 - **Ingestion** : Apache Kafka
 - **Traitement** : Apache Spark (PySpark)
-- **Stockage** : PostgreSQL (PostGIS), MongoDB, Redis
-- **IA** : XGBoost, LSTM, TensorFlow/Keras
+- **Stockage** : 
+  - **Cassandra** (Raw Data / Big Data - 5000+ véhicules)
+  - **PostgreSQL** (PostGIS - Données Agrégées / Météo)
+  - **MongoDB** (Logs)
+  - **Redis** (Cache Temps Réel)
+- **IA** : XGBoost, LSTM, TensorFlow/Keras + **Features Météo**
 - **Backend** : FastAPI
 - **Frontend/Viz** : Grafana

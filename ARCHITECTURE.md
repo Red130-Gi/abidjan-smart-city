@@ -23,9 +23,10 @@ graph TD
         SparkBatch[Spark Batch (Batch Layer)]
     end
 
-    subgraph "Stockage (Hybrid)"
+    subgraph "Stockage (Hybrid Big Data)"
+        Cassandra[(Apache Cassandra - Raw Data Lake)]
         Redis[(Redis - Cache Temps Réel)]
-        Postgres[(PostgreSQL/PostGIS - Données Structurées)]
+        Postgres[(PostgreSQL/PostGIS - Données Agrégées)]
         Mongo[(MongoDB - Logs/Archives)]
     end
 
@@ -51,7 +52,8 @@ graph TD
     Kafka --> SparkBatch
 
     SparkStream --> |Mise à jour état| Redis
-    SparkStream --> |Alertes/Données| Postgres
+    SparkStream --> |Raw Data (5000+ vehicles)| Cassandra
+    SparkStream --> |Alertes/Agrégats| Postgres
     SparkBatch --> |Historique| Mongo
     SparkBatch --> |Entraînement| Model_Traffic
 
@@ -77,13 +79,15 @@ graph TD
 - **Speed Layer (Spark Streaming)**: Traite les flux en temps réel. Calcule la vitesse moyenne, la densité du trafic, et détecte les anomalies instantanées. Latence cible < 1s.
 - **Batch Layer (Spark Batch)**: Traite l'historique complet stocké dans MongoDB/HDFS (simulé ici par MongoDB) pour réentraîner les modèles et corriger les vues.
 
-### C. Stockage Hybride
+### C. Stockage Hybride (Big Data)
+- **Apache Cassandra**: Base NoSQL distribuée pour le stockage massif des données brutes de trafic (5000+ véhicules). Optimisée pour les écritures intensives.
 - **Redis**: Base de données In-Memory pour les données "chaudes" (état actuel du trafic, dernières alertes). Permet une lecture ultra-rapide pour l'API et les dashboards temps réel.
-- **PostgreSQL + PostGIS**: Stockage relationnel et géospatial. Stocke la topologie de la ville (routes, ponts), les métadonnées des capteurs, et les agrégats structurés.
-- **MongoDB**: Base NoSQL pour le stockage des données brutes (Data Lake) et des logs volumineux.
+- **PostgreSQL + PostGIS**: Stockage relationnel et géospatial. Stocke la topologie de la ville (routes, ponts), les métadonnées des capteurs, les données météo, et les agrégats structurés.
+- **MongoDB**: Base NoSQL pour le stockage des logs volumineux et archives.
 
 ### D. Intelligence Artificielle
 - **Prédiction de Trafic**: Ensemble Learning combinant XGBoost (pour les données tabulaires/contextuelles) et LSTM (pour les séquences temporelles).
+- **Features Météo**: Intégration des données de précipitation et température pour améliorer les prédictions (corrélation pluie ↔ ralentissement).
 - **Détection d'Anomalies**: Algorithmes statistiques (Z-score, IQR) et ML non supervisé (Isolation Forest) pour détecter les accidents ou congestions atypiques.
 
 ### E. API & Visualisation

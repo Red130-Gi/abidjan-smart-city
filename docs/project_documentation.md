@@ -38,16 +38,26 @@ Le projet a suivi une approche itérative et incrémentale :
 *   Ajout de la détection d'anomalies.
 *   Extension des dashboards avec des prédictions à 1h et des détails par segment.
 
+### Phase 5 : Big Data & Intelligence Météo
+*   **Migration Cassandra** : Ajout d'Apache Cassandra pour le stockage massif des données brutes (5000+ véhicules simulés).
+*   **Intégration Météo** : Les données de précipitation et température sont maintenant intégrées au pipeline ML.
+*   **Nouvelles Features ML** : `precipitation`, `temperature`, `rain_traffic_interaction` pour améliorer les prédictions.
+
 ---
 
 ## 3. Conception Technique (Architecture)
 
 ### 3.1 Stack Technologique
 *   **Langage :** Python 3.9+
-*   **Base de Données :** PostgreSQL 15
+*   **Ingestion :** Apache Kafka
+*   **Traitement :** Apache Spark (Streaming)
+*   **Stockage :**
+    *   **Apache Cassandra** (Données Brutes / Big Data - 5000+ véhicules)
+    *   **PostgreSQL/PostGIS** (Données Agrégées, Météo, Prédictions)
+    *   **Redis** (Cache Temps Réel)
 *   **Visualisation :** Grafana
 *   **Conteneurisation :** Docker & Docker Compose
-*   **ML Libraries :** Scikit-learn, XGBoost, TensorFlow/Keras, Pandas.
+*   **ML Libraries :** Scikit-learn, XGBoost, TensorFlow/Keras
 
 ### 3.2 Architecture des Services
 ```mermaid
